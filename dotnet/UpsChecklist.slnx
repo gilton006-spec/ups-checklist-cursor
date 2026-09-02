@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="UpsChecklist.Core/UpsChecklist.Core.csproj" />
+  <Project Path="UpsChecklist.Tests/UpsChecklist.Tests.csproj" />
+  <Project Path="UpsChecklist.Web/UpsChecklist.Web.csproj" />
+</Solution>

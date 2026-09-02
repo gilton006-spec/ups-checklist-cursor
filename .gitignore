@@ -40,3 +40,13 @@ next-env.d.ts
 /.sites-runtime/
 /outputs/
 /work/
+
+dotnet/UpsChecklist.Web/appsettings.Development.local.json
+
+# .NET build output
+**/bin/
+**/obj/
+*.user
+*.suo
+.vs/
+**/__pycache__/

@@ -1,0 +1,9 @@
+{
+  "HandoverEmail": {
+    "Host": "smtp-mail.outlook.com",
+    "Port": 587,
+    "Username": "gilton93@hotmail.com",
+    "From": "gilton93@hotmail.com",
+    "Password": "PASTE_YOUR_HOTMAIL_APP_PASSWORD_HERE"
+  }
+}
