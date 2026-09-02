@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "incremental": false },
+  "include": ["app/page.tsx", "app/layout.tsx", "app/api/download/route.ts", "lib/checklist-positions.ts", "lib/create-checklist-pdf.ts"],
+  "exclude": ["node_modules", "dist"]
+}
