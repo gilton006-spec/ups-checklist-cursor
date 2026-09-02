@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, type PointerEvent } from "react";
-import { Download, Minus, Plus, Sun, PenLine, Type, ChevronDown, Expand } from "lucide-react";
+import { Download, Minus, Plus, Sun, PenLine, Type, Expand } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { positions, getPosition, allItems, emptyDraft, scheduleWarning, type CheckItem, type PositionDraft } from "@/lib/checklist-positions";
+import { positions, getPosition, allItems, emptyDraft, type CheckItem, type PositionDraft } from "@/lib/checklist-positions";
 
 export default function Home() {
   const [date, setDate] = useState("");
@@ -21,7 +21,6 @@ export default function Home() {
   const draft = drafts[positionId] ?? emptyDraft();
   const items = position ? allItems(position) : [];
   const completed = items.filter(item => draft.checks[item.id]).length;
-  const warning = position ? scheduleWarning(position, date) : undefined;
 
   useEffect(() => {
     const d = new Date();
@@ -65,12 +64,9 @@ export default function Home() {
         <div><label className="field-label" htmlFor="date">Date</label><Input type="date" id="date" value={date} onChange={e => { setDate(e.target.value); changed(); }} /></div>
         <div><label className="field-label" htmlFor="name">Name</label><Input id="name" autoComplete="name" maxLength={65} value={name} onChange={e => { setName(e.target.value); changed(); }} /></div>
       </section>
-      {warning && <p className="source-warning" role="status">{warning}</p>}
-      {position.sourceNotes && <details className="source-notes"><summary>Confirm with your team leader <ChevronDown size={18} /></summary>{position.sourceNotes.map(note => <p key={note}>{note}</p>)}</details>}
       <div key={positionId}>
         {position.sections.map(section => <section className="check-section" key={section.id} aria-labelledby={`${section.id}-heading`}>
           <div className="section-heading"><h2 id={`${section.id}-heading`}>{section.title}</h2><span className="section-count">{section.items.filter(i => draft.checks[i.id]).length} / {section.items.length}</span></div>
-          {section.note && <p className="source-warning">{section.note}</p>}
           {section.images?.map(img => <figure className="diagram" key={img.file}><a href={`/workbook/${img.file}`} target="_blank" rel="noreferrer" aria-label={`Enlarge ${img.label}`}><img src={`/workbook/${img.file}`} alt={img.label} loading="lazy" /><figcaption><span>{img.label}</span><span className="enlarge-label"><Expand size={16} /> Enlarge</span></figcaption></a></figure>)}
           <div className="check-list">{section.items.map(row)}</div>
           {section.remarksKey && <div className="section-remarks"><label className="field-label" htmlFor={`remarks-${section.remarksKey}`}>{section.remarksKey === "sls1" ? "SLS1 remarks" : "Recirculation remarks"} <span className="optional">Optional</span></label><Textarea id={`remarks-${section.remarksKey}`} value={draft.sectionRemarks[section.remarksKey] ?? ""} maxLength={1000} onChange={e => updateDraft({ sectionRemarks: { ...draft.sectionRemarks, [section.remarksKey!]: e.target.value } })} /></div>}
@@ -79,7 +75,6 @@ export default function Home() {
       <div className="package-count"><label className="field-label" htmlFor="packages">{position.packageLabel}</label><div className="count-controls"><Button type="button" variant="outline" aria-label="Decrease package count" disabled={draft.count === "" || Number(draft.count) === 0} onClick={() => updateDraft({ count: String(Math.max(0, Number(draft.count) - 1)) })}><Minus /></Button><Input id="packages" type="text" inputMode="numeric" pattern="[0-9]*" placeholder="Count" value={draft.count} maxLength={5} onChange={e => updateDraft({ count: e.target.value.replace(/\D/g, "") })} /><Button type="button" variant="outline" aria-label="Increase package count" disabled={Number(draft.count) >= 99999} onClick={() => updateDraft({ count: String(Number(draft.count) + 1) })}><Plus /></Button><Button type="button" className="none-button" variant="outline" onClick={() => updateDraft({ count: "0" })}>None (0)</Button></div></div>
       <section className="finish-section" aria-label="Remarks and signature">
         <label className="field-label" htmlFor="remarks">Remarks <span className="optional">Optional</span></label><Textarea id="remarks" placeholder="Issues, unfinished checks or follow-up" value={draft.remarks} maxLength={2000} onChange={e => updateDraft({ remarks: e.target.value })} />
-        {position.handover && <details className="source-notes"><summary>Paper handover instructions <ChevronDown size={18} /></summary><p>{position.handover}</p><p>Confirm the digital handover with your team leader.</p></details>}
         <div className="signature-heading"><h3>Signature</h3></div>
         <Tabs value={draft.signatureMode} onValueChange={v => updateDraft({ signatureMode: v as "type" | "draw" })}><TabsList className="signature-tabs" aria-label="Signature method"><TabsTrigger value="type"><Type size={18} /> Type name</TabsTrigger><TabsTrigger value="draw"><PenLine size={18} /> Draw signature</TabsTrigger></TabsList>
           <TabsContent value="type"><label className="sr-only" htmlFor="signature">Typed signature</label><Input id="signature" className="signature-input" placeholder="Type your signature" maxLength={65} value={draft.signature} onChange={e => updateDraft({ signature: e.target.value })} /><Button type="button" variant="outline" className="use-name" disabled={!name.trim()} onClick={() => updateDraft({ signature: name })}>Use my name</Button></TabsContent>
