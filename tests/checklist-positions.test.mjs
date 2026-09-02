@@ -61,7 +61,8 @@ test("initial screen exposes all nine position buttons and no preselected positi
   for (const position of positions) assert.ok(html.includes(position.label.replaceAll("&", "&amp;")));
   assert.match(html, /Choose your position/);
   assert.equal((html.match(/aria-pressed="false"/g) ?? []).length, 9);
-  assert.match(html, /Prototype for review/);
+  assert.match(html, /Demo only\. Not UPS approved/);
+  assert.doesNotMatch(html, /Open the right checklist with one tap/);
 });
 
 for (const position of positions) test(`${position.label}: endpoint generates the right editable PDF`, async () => {
