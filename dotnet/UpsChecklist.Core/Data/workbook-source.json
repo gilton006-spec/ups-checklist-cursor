@@ -1,0 +1,538 @@
+{
+  "source": "10. Checklist Jambreakers Sunrise(2).xlsx",
+  "sha256": "08a534292108b0c274b792dd10386c994b0c68695e1638246874923290b42b83",
+  "sheets": [
+    {
+      "name": "Ps1-Ps2 monday only",
+      "state": "visible",
+      "cells": {
+        "C1": "Checklist Jamb. / Sing.",
+        "G1": "Date:",
+        "H1": "46267.232282175923",
+        "E3": "Jambreaker/Singulator PS1/PS2",
+        "C4": "Sunrise",
+        "A7": "Before the sort:",
+        "A8": "*",
+        "B8": "Take some tape with you for repacking",
+        "A10": "*",
+        "B10": "Be on time upstairs and on position",
+        "A12": "*",
+        "B12": "Singulator position clean ",
+        "F12": "When you start",
+        "A14": "After the Sort:",
+        "A15": "PS1",
+        "A20": "*",
+        "B20": "Check all chute's",
+        "A22": "*",
+        "B22": "Check the belt from the turn till the off the end",
+        "A24": "Ps2",
+        "A30": "*",
+        "B30": "Check all chute's",
+        "A32": "*",
+        "B32": "Check the belt from the turn till the off the end",
+        "A35": "*",
+        "B35": "Singulator position clean ",
+        "F35": "When you start",
+        "A37": "*",
+        "B37": "How many packages did you find",
+        "A39": "Other remarks",
+        "A45": "Name:",
+        "E45": "Signature:"
+      },
+      "images": [
+        {
+          "file": "image1.png",
+          "row": 1,
+          "col": 1,
+          "crop": {}
+        },
+        {
+          "file": "image2.png",
+          "row": 16,
+          "col": 1,
+          "crop": {}
+        },
+        {
+          "file": "image3.png",
+          "row": 25,
+          "col": 1,
+          "crop": {}
+        }
+      ]
+    },
+    {
+      "name": "Ps1 other days",
+      "state": "visible",
+      "cells": {
+        "C1": "Checklist Jamb. / Sing.",
+        "G1": "Date:",
+        "H1": "46267.232282175923",
+        "E3": "Jambreaker/Singulator PS1",
+        "C4": "Sunrise",
+        "A7": "Before the sort:",
+        "A8": "*",
+        "B8": "Take some tape with you for repacking",
+        "A10": "*",
+        "B10": "Be on time upstairs and on position",
+        "A12": "*",
+        "B12": "Singulator position clean when you start?",
+        "A14": "After the Sort:",
+        "A20": "*",
+        "B20": "Check all chute's",
+        "A22": "*",
+        "B22": "Check the belt from the turn till the off the end",
+        "A24": "*",
+        "B24": "Singulator position clean when you finish?",
+        "A26": "*",
+        "B26": "How many packages did you find",
+        "A39": "Other remarks",
+        "A45": "Name:",
+        "E45": "Signature:"
+      },
+      "images": [
+        {
+          "file": "image1.png",
+          "row": 1,
+          "col": 1,
+          "crop": {}
+        },
+        {
+          "file": "image2.png",
+          "row": 15,
+          "col": 1,
+          "crop": {}
+        }
+      ]
+    },
+    {
+      "name": "Ps2 other days",
+      "state": "visible",
+      "cells": {
+        "C1": "Checklist Jamb. / Sing.",
+        "G1": "Date:",
+        "H1": "46267.232282175923",
+        "E3": "Jambreaker/Singulator PS2",
+        "C4": "Sunrise",
+        "A7": "Before the sort:",
+        "A8": "*",
+        "B8": "Take some tape with you for repacking",
+        "A10": "*",
+        "B10": "Be on time upstairs and on position",
+        "A12": "*",
+        "B12": "Singulator position clean when you start?",
+        "A14": "After the Sort:",
+        "A21": "*",
+        "B21": "Check all chute's",
+        "A23": "*",
+        "B23": "Check the belt from the turn till the off the end",
+        "A25": "*",
+        "B25": "Singulator position clean when you finish?",
+        "A27": "*",
+        "B27": "How many packages did you find",
+        "A39": "Other remarks",
+        "A45": "Name:",
+        "E45": "Signature:"
+      },
+      "images": [
+        {
+          "file": "image1.png",
+          "row": 1,
+          "col": 1,
+          "crop": {}
+        },
+        {
+          "file": "image3.png",
+          "row": 15,
+          "col": 1,
+          "crop": {}
+        }
+      ]
+    },
+    {
+      "name": "PD1",
+      "state": "visible",
+      "cells": {
+        "C1": "Checklist Jamb. / Sing.",
+        "G1": "Date:",
+        "H1": "46267.232282175923",
+        "E3": "Jambreaker/Singulator PD1",
+        "C4": "Sunrise",
+        "A7": "Before the sort:",
+        "A8": "*",
+        "B8": "Take some tape with you for repacking",
+        "A10": "*",
+        "B10": "Be on time upstairs and on position",
+        "A12": "*",
+        "B12": "Singulator position clean when you start?",
+        "A14": "After the Sort:",
+        "A25": "*",
+        "B25": "Check all belts",
+        "F25": "Check all chute's",
+        "A27": "*",
+        "B27": "Check also on the work floor, the first part of the metro belt",
+        "F29": "*",
+        "G29": "How many packages did you find",
+        "A36": "*",
+        "B36": "Bring the tape back to the Control Room",
+        "A38": "*",
+        "B38": "Singulator position clean when you finish?",
+        "A40": "Other remarks",
+        "A46": "Name:",
+        "E46": "Signature:"
+      },
+      "images": [
+        {
+          "file": "image1.png",
+          "row": 1,
+          "col": 1,
+          "crop": {}
+        },
+        {
+          "file": "image4.png",
+          "row": 28,
+          "col": 2,
+          "crop": {}
+        },
+        {
+          "file": "image5.png",
+          "row": 15,
+          "col": 1,
+          "crop": {}
+        }
+      ]
+    },
+    {
+      "name": "PD2 Not on Monday",
+      "state": "visible",
+      "cells": {
+        "C1": "Checklist Jamb. / Sing.",
+        "G1": "Date:",
+        "H1": "46267.232282175923",
+        "E3": "Jambreaker/Singulator PD2",
+        "C4": "Sunrise",
+        "A7": "Before the sort:",
+        "A8": "*",
+        "B8": "Take some tape with you for repacking",
+        "A10": "*",
+        "B10": "Be on time upstairs and on position",
+        "A12": "*",
+        "B12": "Singulator position clean when you start?",
+        "A14": "After the Sort:",
+        "A25": "*",
+        "B25": "Check all belts",
+        "F25": "Check all chute's",
+        "A27": "*",
+        "B27": "Check also on the work floor, the first part of the metro belt",
+        "F29": "*",
+        "G29": "How many packages did you find",
+        "A36": "*",
+        "B36": "Bring the tape back to the Control Room",
+        "A38": "*",
+        "B38": "Singulator position clean when you finish?",
+        "A40": "Other remarks",
+        "A46": "Name:",
+        "E46": "Signature:"
+      },
+      "images": [
+        {
+          "file": "image1.png",
+          "row": 1,
+          "col": 1,
+          "crop": {}
+        },
+        {
+          "file": "image6.png",
+          "row": 16,
+          "col": 1,
+          "crop": {}
+        },
+        {
+          "file": "image4.png",
+          "row": 28,
+          "col": 2,
+          "crop": {}
+        }
+      ]
+    },
+    {
+      "name": "PD3",
+      "state": "visible",
+      "cells": {
+        "C1": "Checklist Jamb. / Sing.",
+        "G1": "Date:",
+        "H1": "46267.232282175923",
+        "E3": "Jambreaker/Singulator PD3",
+        "C4": "Sunrise",
+        "A7": "Before the sort:",
+        "A8": "*",
+        "B8": "Take some tape with you for repacking",
+        "A10": "*",
+        "B10": "Be on time upstairs and on position",
+        "A12": "*",
+        "B12": "Singulator position clean when you start?",
+        "A14": "After the Sort:",
+        "A25": "*",
+        "B25": "Check all belts",
+        "F25": "Check all chute's",
+        "A27": "*",
+        "B27": "Check also on the work floor, the first part of the metro belt",
+        "F29": "*",
+        "G29": "How many packages did you find",
+        "A37": "*",
+        "B37": "Bring the tape back to the Control Room",
+        "A39": "*",
+        "B39": "Singulator position clean when you finish?",
+        "A41": "Other remarks",
+        "A47": "Name:",
+        "E47": "Signature:"
+      },
+      "images": [
+        {
+          "file": "image1.png",
+          "row": 1,
+          "col": 1,
+          "crop": {}
+        },
+        {
+          "file": "image7.png",
+          "row": 15,
+          "col": 1,
+          "crop": {}
+        },
+        {
+          "file": "image4.png",
+          "row": 28,
+          "col": 2,
+          "crop": {}
+        }
+      ]
+    },
+    {
+      "name": "PD4",
+      "state": "visible",
+      "cells": {
+        "C1": "Checklist Jamb. / Sing.",
+        "G1": "Date:",
+        "H1": "46267.232282175923",
+        "E3": "Jambreaker/Singulator PD4",
+        "C4": "Sunrise",
+        "A7": "Before the sort:",
+        "A8": "*",
+        "B8": "Take some tape with you for repacking",
+        "A10": "*",
+        "B10": "Be on time upstairs and on position",
+        "A12": "*",
+        "B12": "Singulator position clean when you start?",
+        "A14": "After the Sort:",
+        "A25": "*",
+        "B25": "Check all belts",
+        "F25": "Check all chute's",
+        "A27": "*",
+        "B27": "Check also on the work floor, the first part of the metro belt",
+        "F29": "*",
+        "G29": "How many packages did you find",
+        "A36": "*",
+        "B36": "Bring the tape back to the Control Room",
+        "A38": "*",
+        "B38": "Singulator position clean when you finish?",
+        "A40": "Other remarks",
+        "A46": "Name:",
+        "E46": "Signature:"
+      },
+      "images": [
+        {
+          "file": "image1.png",
+          "row": 1,
+          "col": 1,
+          "crop": {}
+        },
+        {
+          "file": "image8.png",
+          "row": 15,
+          "col": 1,
+          "crop": {}
+        },
+        {
+          "file": "image4.png",
+          "row": 28,
+          "col": 2,
+          "crop": {}
+        }
+      ]
+    },
+    {
+      "name": "Smalls",
+      "state": "visible",
+      "cells": {
+        "C1": "Checklist Jamb. / Sing.",
+        "G1": "Date:",
+        "H1": "46267.232282175923",
+        "E3": "Jambreaker/Singulator Smalls",
+        "C4": "Sunrise",
+        "D4": "1 of 2",
+        "A7": "Before the sort:",
+        "A8": "*",
+        "B8": "Take some tape with you for repacking",
+        "A10": "*",
+        "B10": "Be on time upstairs and on position",
+        "A12": "*",
+        "B12": "Check after the sort (Walk Off), all belts and specially all marked positions",
+        "A14": "After the Sort:",
+        "A15": "SLS1",
+        "A30": "*",
+        "B30": "Check all take away belts",
+        "E30": "*",
+        "F30": "Check both sides of this form",
+        "A32": "2 Check under and around this position",
+        "A34": "*",
+        "B34": "1 Check the Flow Splitter",
+        "A36": "*",
+        "B36": "2 Check off the end",
+        "A38": "*",
+        "B38": "3 Check under the Waterfall",
+        "A40": "*",
+        "B40": "4 Check the marked area circled as 4",
+        "A42": "Other remarks",
+        "C48": "Checklist Jamb. / Sing.",
+        "G48": "Date:",
+        "H48": "46267.232282175923",
+        "A49": "Page 2 of 2",
+        "E50": "Jambreaker/Singulator Smalls",
+        "C51": "Sunrise",
+        "D51": "2 of 2",
+        "A53": "SLS2",
+        "A68": "*",
+        "B68": "Bring the rest of the tape back to the Control Room",
+        "A70": "*",
+        "B70": "1 check the corner (turn)",
+        "A72": "*",
+        "B72": "2 check the belt from the flow Splitter",
+        "A74": "*",
+        "B74": "3 check all recirculation belts",
+        "A76": "*",
+        "B76": "4 check of the end of sls2 but also all other bets connecting sls1 tot 2 and back to 1",
+        "A78": "*",
+        "B78": "Check under both sls belts",
+        "A80": "*",
+        "B80": "Check under the waterfall",
+        "A82": "*",
+        "B82": "How many packages did you find",
+        "A84": "Other remarks",
+        "A90": "*",
+        "B90": "Sign the form on the first page and hand it over to Martin (don't forget to give back the pen)",
+        "A93": "Name:",
+        "E93": "Signature:"
+      },
+      "images": [
+        {
+          "file": "image1.png",
+          "row": 1,
+          "col": 1,
+          "crop": {}
+        },
+        {
+          "file": "image9.png",
+          "row": 16,
+          "col": 1,
+          "crop": {}
+        },
+        {
+          "file": "image10.png",
+          "row": 54,
+          "col": 1,
+          "crop": {}
+        },
+        {
+          "file": "image11.png",
+          "row": 31,
+          "col": 6,
+          "crop": {}
+        }
+      ]
+    },
+    {
+      "name": "Matrix",
+      "state": "visible",
+      "cells": {
+        "C1": "Checklist Jamb. / Sing.",
+        "G1": "Date:",
+        "H1": "46267.232282175923",
+        "E3": "Jambreaker/Singulator Matrix",
+        "C4": "Sunrise",
+        "D4": "1 of 2",
+        "A7": "Before the sort:",
+        "A8": "*",
+        "B8": "Take some tape with you for repacking",
+        "A10": "*",
+        "B10": "Take some spray with you for chute's spraying",
+        "A12": "*",
+        "B12": "Be on time upstairs and on position",
+        "A14": "After the Sort:",
+        "A30": "*",
+        "B30": "Check the complete recirculation belt",
+        "A32": "*",
+        "B32": "Check ps3",
+        "C32": "Upstairs and at Unload Docks",
+        "A34": "*",
+        "B34": "Check ps4",
+        "C34": "Upstairs and at Unload Docks",
+        "A36": "*",
+        "B36": "Check ps5",
+        "C36": "Upstairs and at Unload Docks",
+        "A38": "*",
+        "A40": "Remarks",
+        "C48": "Checklist Jamb. / Sing.",
+        "G48": "Date:",
+        "H48": "46267.232282175923",
+        "A49": "Page 2 of 2",
+        "E50": "Jambreaker/Singulator Matrix",
+        "C51": "Sunrise",
+        "D51": "2 of 2",
+        "A53": "*",
+        "B53": "Check everything at the DA platform",
+        "A55": "*",
+        "B55": "Check also the belt to the DA",
+        "A57": "*",
+        "B57": "Check the belt from the DA back to recirculation",
+        "A59": "*",
+        "B59": "Check under the DA",
+        "A74": "*",
+        "B74": "Check under this chute, sometimes packages are stuck here",
+        "A76": "*",
+        "B76": "Check all Collecter Belts",
+        "A83": "*",
+        "B83": "Bring back the tape and Spray",
+        "E84": "How many packages do you find",
+        "A86": "Other remarks",
+        "A92": "Name:",
+        "E92": "Signature:"
+      },
+      "images": [
+        {
+          "file": "image1.png",
+          "row": 1,
+          "col": 1,
+          "crop": {}
+        },
+        {
+          "file": "image12.png",
+          "row": 15,
+          "col": 1,
+          "crop": {}
+        },
+        {
+          "file": "image13.png",
+          "row": 53,
+          "col": 8,
+          "crop": {}
+        },
+        {
+          "file": "image14.png",
+          "row": 61,
+          "col": 2,
+          "crop": {}
+        }
+      ]
+    }
+  ]
+}

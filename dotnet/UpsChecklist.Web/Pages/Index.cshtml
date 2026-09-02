@@ -1,0 +1,112 @@
+﻿@page
+@model UpsChecklist.Web.Pages.IndexModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "UPS Sunrise Position Checklists";
+}
+
+<main class="page-shell" id="app">
+    <header class="topbar">
+        <div class="wordmark">
+            <img src="/workbook/image1.png" alt="UPS" width="47" height="47" />
+            <span>Shift <span class="wordmark-light">Checklist</span></span>
+        </div>
+        <span class="shift">☀ Sunrise</span>
+    </header>
+    <p class="demo-label">Demo only. Not UPS approved.</p>
+    <div id="position-header" class="position-header hidden">
+        <div>
+            <h1 id="position-heading" tabindex="-1"></h1>
+            <p id="position-schedule"></p>
+        </div>
+        <button type="button" class="btn secondary" id="toggle-picker" aria-expanded="false" aria-controls="position-picker">Change position</button>
+    </div>
+    <div id="intro" class="intro">
+        <h1>Choose your position</h1>
+    </div>
+    <section id="position-picker" class="position-grid" aria-label="Jambreaker position"></section>
+    <div id="checklist-panel" class="hidden">
+        <section class="identity" aria-label="Checklist details">
+            <div>
+                <label class="field-label" for="date">Date</label>
+                <input type="date" id="date" />
+            </div>
+            <div>
+                <label class="field-label" for="name">Name</label>
+                <input id="name" autocomplete="name" maxlength="65" />
+            </div>
+        </section>
+        <div id="sections"></div>
+        <div class="package-count">
+            <label class="field-label" for="packages" id="package-label"></label>
+            <div class="count-controls">
+                <button type="button" class="btn icon" id="count-dec" aria-label="Decrease package count">−</button>
+                <input id="packages" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Count" maxlength="5" />
+                <button type="button" class="btn icon" id="count-inc" aria-label="Increase package count">+</button>
+                <button type="button" class="btn secondary none-button" id="count-none">None (0)</button>
+            </div>
+        </div>
+        <section class="finish-section" aria-label="Remarks and signature">
+            <label class="field-label" for="remarks">Remarks <span class="optional">Optional</span></label>
+            <textarea id="remarks" placeholder="Issues, unfinished checks or follow-up" maxlength="2000"></textarea>
+            <div id="evidence-photo-root"></div>
+            <div class="signature-heading"><h3>Signature</h3></div>
+            <div class="signature-tabs" role="tablist" aria-label="Signature method">
+                <button type="button" class="btn tab active" data-signature-mode="type" role="tab" aria-selected="true">Type name</button>
+                <button type="button" class="btn tab" data-signature-mode="draw" role="tab" aria-selected="false">Draw signature</button>
+            </div>
+            <div id="signature-type-panel">
+                <label class="sr-only" for="signature">Typed signature</label>
+                <input id="signature" class="signature-input" placeholder="Type your signature" maxlength="65" />
+                <button type="button" class="btn secondary use-name" id="use-name" disabled>Use my name</button>
+            </div>
+            <div id="signature-draw-panel" class="hidden">
+                <p class="drawing-hint">Sign here</p>
+                <canvas id="signature-canvas" width="700" height="180" aria-label="Draw your signature"></canvas>
+                <button type="button" class="btn secondary" id="clear-signature">Clear</button>
+            </div>
+            <p class="field-hint">PDFs and photos use external hosting. No report archive. Refresh clears entries.</p>
+        </section>
+    </div>
+    <div class="status-area" role="status" aria-live="polite" id="status-area"></div>
+    <footer class="download-bar hidden" id="download-bar">
+        <div class="download-inner">
+            <div class="progress-copy">
+                <strong id="progress-count">0 <span>/ 0</span></strong>
+                <span id="progress-label"></span>
+            </div>
+            <div class="report-actions">
+                <button type="button" class="btn email-button" id="email-open" disabled>Send report</button>
+                <button type="button" class="btn whatsapp-button" id="whatsapp-open" disabled>WhatsApp</button>
+            </div>
+        </div>
+    </footer>
+    <dialog id="whatsapp-dialog" class="handover-dialog">
+        <h2>WhatsApp handover</h2>
+        <p class="handover-intro">To +31 626149058. Confirm sending in WhatsApp.</p>
+        <p id="whatsapp-status" role="status"></p>
+        <p id="whatsapp-error" class="photo-error hidden" role="alert"></p>
+        <button type="button" class="btn whatsapp-button hidden" id="whatsapp-share">Share to +31 626149058</button>
+        <p class="handover-hint hidden" id="whatsapp-hint-desktop">On a computer, use Send report instead. WhatsApp file sharing works on a phone.</p>
+        <p class="handover-hint hidden" id="whatsapp-hint-share">Choose WhatsApp, pick +31 626149058, and confirm sending. Nothing is saved on your device.</p>
+        <p class="handover-hint hidden" id="whatsapp-message" role="status"></p>
+        <button type="button" class="btn secondary" id="whatsapp-close">Close</button>
+    </dialog>
+    <dialog id="email-dialog" class="handover-dialog">
+        <h2>Send report to company</h2>
+        <p class="handover-intro" id="email-intro">The PDF goes to the company inbox. Nothing is saved on your device.</p>
+        <p id="email-status" role="status"></p>
+        <p id="email-error" class="photo-error hidden" role="alert"></p>
+        <p id="email-message" class="handover-hint hidden" role="status"></p>
+        <button type="button" class="btn secondary" id="email-close">Close</button>
+    </dialog>
+</main>
+
+<script id="positions-data" type="application/json">@Html.Raw(Model.PositionsJson)</script>
+@section Scripts {
+    <script src="~/js/evidence-photo.js" asp-append-version="true"></script>
+    <script src="~/js/signature-pad.js" asp-append-version="true"></script>
+    <script src="~/js/whatsapp-handover.js" asp-append-version="true"></script>
+    <script src="~/js/email-handover.js" asp-append-version="true"></script>
+    <script src="~/js/checklist.js" asp-append-version="true"></script>
+}

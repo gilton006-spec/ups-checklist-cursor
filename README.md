@@ -1,14 +1,71 @@
 # UPS Sunrise Checklist
 
-For this application's features, Cursor setup, local commands and Git handoff, start with [CURSOR_SETUP.md](CURSOR_SETUP.md).
+For Cursor setup, local commands, and Git handoff, start with [CURSOR_SETUP.md](CURSOR_SETUP.md).
 
-The material below is retained starter documentation. Some platform lifecycle details are historical; use the current Sites workflow when publishing from ChatGPT.
+## ASP.NET Core migration (.NET 10)
+
+The **`dotnet-migration`** branch adds a C# / ASP.NET Core Razor Pages replacement under [`dotnet/`](dotnet/). The original Node.js application at the repository root is **unchanged** and remains available for comparison until you verify the new app.
+
+| | Original (Node / Vinext) | New (ASP.NET Core) |
+| --- | --- | --- |
+| Runtime | Node.js 22+ | .NET 10 SDK only |
+| Location | Repository root | [`dotnet/UpsChecklist.Web`](dotnet/UpsChecklist.Web) |
+| Tests | `npm run test:local` (30 checks) | `dotnet test` in [`dotnet/`](dotnet/) (20 checks) |
+| PDF library | pdf-lib (ISC) | [Aspose.PDF.FOSS](https://github.com/aspose-pdf/Aspose.PDF-for-.NET) (MIT) |
+
+### Prerequisites
+
+Install the **.NET 10 SDK** (10.0.400 or newer):
+
+```powershell
+winget install Microsoft.DotNet.SDK.10 --accept-package-agreements --accept-source-agreements
+dotnet --version
+```
+
+Node.js is **not** required to run the new application. It is still needed only if you work on the original app or run `node scripts/extract-assets.mjs` to refresh workbook images from source.
+
+### Cursor: open and run the new app
+
+1. **File → Open Folder** → select `UPS_Checklist_Cursor`.
+2. Check out the migration branch: `git checkout dotnet-migration`
+3. Open Cursor's terminal:
+
+```powershell
+cd dotnet
+dotnet restore UpsChecklist.slnx
+dotnet build UpsChecklist.slnx
+dotnet test UpsChecklist.slnx
+dotnet run --project UpsChecklist.Web
+```
+
+4. Open the URL printed by Kestrel (typically `https://localhost:7xxx` or `http://localhost:5xxx`).
+
+First-time workbook images: if `dotnet/UpsChecklist.Web/wwwroot/workbook/` is empty, run once from the repo root:
+
+```powershell
+node scripts/extract-assets.mjs
+```
+
+### Solution layout
+
+| Path | Purpose |
+| --- | --- |
+| [`dotnet/UpsChecklist.Web`](dotnet/UpsChecklist.Web) | Razor Pages UI, static JS, `/api/download` endpoint |
+| [`dotnet/UpsChecklist.Core`](dotnet/UpsChecklist.Core) | Positions, validation, PDF generation |
+| [`dotnet/UpsChecklist.Tests`](dotnet/UpsChecklist.Tests) | Automated migration tests |
+| `app/`, `lib/`, `components/` | Original Node application (preserved) |
+
+### Privacy and WhatsApp
+
+Behaviour matches the original: no login, no permanent storage, resized photos, explicit WhatsApp confirmation to **+31 626149058**, and no automatic delivery claims. See [CURSOR_SETUP.md](CURSOR_SETUP.md) for details.
+
+---
 
 ## Original starter notes
 
 A clean full-stack starter running on [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and Drizzle support.
 
-## Prerequisites
+## Prerequisites (original Node app)
 
 - Node.js `>=22.13.0`
 - Linux with `flock`, `curl`, and GNU `timeout`
@@ -34,53 +91,7 @@ Scripts that need writable project-scoped home, npm, XDG, and temporary paths us
 - `examples/d1/` contains an optional D1 example surface
 - `drizzle.config.ts` supports local migration generation when needed
 
-## Workspace Auth Headers
-
-OpenAI workspace sites can read the current user's email from `oai-authenticated-user-email`.
-
-SIWC-authenticated workspace sites may also receive `oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty `name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by `oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
-```
-
-## Optional Dispatch-Owned ChatGPT Sign-In
-
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs optional or required ChatGPT sign-in:
-
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send anonymous visitors through Sign in with ChatGPT.
-- In a Server Component, start sign-in with `<a href={chatGPTSignInPath(returnTo)} target="_top">`. The auth helper module is server-only; do not import it into a Client Component.
-- Do not use `fetch`, XHR, a client-side router, or a framework link that can prefetch the sign-in route. SIWC must start as a top-level navigation.
-- Never request the AuthAPI authorization endpoint directly. The dispatch-owned `/signin-with-chatgpt` route must start the SIWC flow.
-- Use `chatGPTSignOutPath(returnTo)` for browser sign-out links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because they depend on per-request identity headers.
-
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the OAuth cookies, and identity header injection. Do not implement app routes for those reserved paths. Routes that do not import and call the helper remain anonymous-compatible.
-
-SIWC establishes identity only; it does not prove workspace membership. Use the Sites hosting platform's access policy controls for workspace-wide restrictions, or enforce explicit server-side membership or allowlist checks.
-
-Use SIWC for account pages, user-specific dashboards, saved records, and write actions tied to the current ChatGPT user. Leave public content anonymous.
-
-## Diagnostic Commands
+## Diagnostic Commands (original Node app)
 
 - `npm run install:ci`: perform the one bounded lockfile install
 - `npm run dev`: start the Vite/Vinext development server
