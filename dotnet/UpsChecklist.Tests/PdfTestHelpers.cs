@@ -24,6 +24,9 @@ internal static class PdfTestHelpers
     public static bool HasField(AcroForm form, string name) =>
         form.Fields.Any(f => f.Information.PartialName == name);
 
+    public static int FieldCount(AcroForm form, string name) =>
+        form.Fields.Count(f => f.Information.PartialName == name);
+
     public static bool HasImage(byte[] bytes, int width, int height)
     {
         using var pdf = PdfDocument.Open(bytes);

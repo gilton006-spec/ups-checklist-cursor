@@ -7,11 +7,12 @@ namespace UpsChecklist.Core.Pdf;
 
 internal static class PdfFormAppearance
 {
-    public const string FormFontName = "Helv";
+    private const int TextFieldBorderWidth = 1;
+    private const int CheckboxBorderWidth = 1;
 
-    public static void Apply(Document document)
+    public static void Apply(Document document, Font font)
     {
-        document.Form.DefaultAppearance = new DefaultAppearance(FormFontName, 10, System.Drawing.Color.Black);
+        document.Form.DefaultAppearance = new DefaultAppearance(font, 10, System.Drawing.Color.Black);
 
         foreach (var entry in document.Form.Fields)
         {
@@ -31,19 +32,14 @@ internal static class PdfFormAppearance
 
     private static void StyleTextBox(TextBoxField field)
     {
-        var size = field.DefaultAppearance?.FontSize ?? 10;
-        if (size <= 0 || double.IsNaN(size))
-            size = 10;
-
-        field.DefaultAppearance = new DefaultAppearance(FormFontName, size, System.Drawing.Color.Black);
-        field.Border = new Border(field) { Width = 1, Style = BorderStyle.Solid };
+        field.Border = new Border(field) { Width = TextFieldBorderWidth, Style = BorderStyle.Solid };
         field.Characteristics.Background = System.Drawing.Color.White;
         field.Characteristics.Border = PdfPalette.FieldBorderDrawing;
     }
 
     private static void StyleCheckBox(CheckboxField field)
     {
-        field.Border = new Border(field) { Width = 1, Style = BorderStyle.Solid };
+        field.Border = new Border(field) { Width = CheckboxBorderWidth, Style = BorderStyle.Solid };
         field.Characteristics.Background = System.Drawing.Color.White;
         field.Characteristics.Border = PdfPalette.MutedDrawing;
     }

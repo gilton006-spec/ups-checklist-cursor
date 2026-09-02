@@ -136,6 +136,7 @@ public sealed class ChecklistPdfCreator
                 var notes = item.Note is null ? [] : Wrapped(ctx, item.Note, Cw - 30, 9);
                 var height = Math.Max(25, lines.Count * 14 + notes.Count * 13 + 10);
                 Ensure(height);
+                ctx.QueueCheckBox(item.Id, data.Checks.GetValueOrDefault(item.Id), M + 1, ctx.Y - 16, 14, 14);
                 var baseline = ctx.Y - 12;
                 foreach (var l in lines)
                 {
@@ -149,7 +150,6 @@ public sealed class ChecklistPdfCreator
                     baseline -= 13;
                 }
 
-                ctx.QueueCheckBox(item.Id, data.Checks.GetValueOrDefault(item.Id), M + 1, ctx.Y - 16, 14, 14);
                 ctx.Y -= height;
             }
 
@@ -211,18 +211,22 @@ public sealed class ChecklistPdfCreator
             AppendText(page, font, $"Page {index + 1} of {document.Pages.Count}", W - M - 62, 29, 8, PdfPalette.Muted);
         }
 
-        ctx.FlushFields();
-        PdfFormAppearance.Apply(document);
+        PdfFormAppearance.Apply(document, font);
 
         using var stream = new MemoryStream();
         document.Save(stream);
         return stream.ToArray();
     }
 
-    private Font LoadFont() =>
-        File.Exists(_fontPath)
-            ? FontRepository.OpenFont(_fontPath)
-            : FontRepository.FindFont("Helvetica");
+    private Font LoadFont()
+    {
+        if (!File.Exists(_fontPath))
+            return FontRepository.FindFont("Helvetica");
+
+        var font = FontRepository.OpenFont(_fontPath);
+        font.IsEmbedded = true;
+        return font;
+    }
 
     private static List<string> Wrapped(LayoutContext ctx, string value, double width, double size)
     {
@@ -293,8 +297,6 @@ public sealed class ChecklistPdfCreator
         private int _pageIndex;
         private TextBoxField? _nameField;
         private TextBoxField? _dateField;
-        private readonly Font _formFont = FontRepository.FindFont("Helvetica");
-        private readonly List<(Field Field, int PageIndex)> _pendingFields = [];
 
         public void BeginPage()
         {
@@ -303,36 +305,28 @@ public sealed class ChecklistPdfCreator
             Y = 0;
         }
 
-        public void FlushFields()
-        {
-            foreach (var (field, pageIndex) in _pendingFields)
-                document.Form.Add(field, pageIndex);
-            _pendingFields.Clear();
-        }
-
         public void QueueHeaderField(string name, string value, double x, double bottom, double width, double height)
         {
+            var rect = new Rectangle(x, bottom, x + width, bottom + height);
             if (name == "name" && _nameField is not null)
             {
-                DrawBorder(x, bottom, width, height, PdfPalette.Line);
-                DrawText(value, x + 2, bottom + height - 6, HeaderFontSize(value, 300, 10), PdfPalette.Ink);
+                document.Form.Add(_nameField, _pageIndex);
                 return;
             }
 
             if (name == "date" && _dateField is not null)
             {
-                DrawBorder(x, bottom, width, height, PdfPalette.Line);
-                DrawText(value, x + 2, bottom + height - 6, 10, PdfPalette.Ink);
+                document.Form.Add(_dateField, _pageIndex);
                 return;
             }
 
-            var field = new TextBoxField(_page, new Rectangle(x, bottom, x + width, bottom + height))
+            var field = new TextBoxField(_page, rect)
             {
                 PartialName = name,
                 Value = value,
             };
-            PrepareTextField(_formFont, field, value, width, multiline: false, maxFontSize: 10, fitWidth: name == "name" ? 300 : width - 10);
-            _pendingFields.Add((field, _pageIndex));
+            PrepareTextField(field, value, width, multiline: false, maxFontSize: 10, fitWidth: name == "name" ? 300 : width - 10);
+            AddField(field);
             if (name == "name")
                 _nameField = field;
             else if (name == "date")
@@ -390,8 +384,8 @@ public sealed class ChecklistPdfCreator
                 Value = value,
                 Multiline = multiline,
             };
-            PrepareTextField(_formFont, field, value, width, multiline);
-            _pendingFields.Add((field, _pageIndex));
+            PrepareTextField(field, value, width, multiline);
+            AddField(field);
         }
 
         public void QueueCheckBox(string name, bool isChecked, double x, double bottom, double width, double height)
@@ -401,19 +395,18 @@ public sealed class ChecklistPdfCreator
                 PartialName = name,
                 Checked = isChecked,
             };
-            _pendingFields.Add((field, _pageIndex));
+            AddField(field);
         }
 
         public double Measure(string text, double size) => font.MeasureString(text, (float)size);
 
-        private double HeaderFontSize(string value, double fitWidth, double maxSize) =>
-            Math.Min(maxSize, fitWidth / Math.Max(1, font.MeasureString(value, 1f)));
+        private void AddField(Field field) => document.Form.Add(field, _pageIndex);
 
-        private static void PrepareTextField(Font formFont, TextBoxField field, string value, double width, bool multiline, double maxFontSize = 11, double fitWidth = 0)
+        private void PrepareTextField(TextBoxField field, string value, double width, bool multiline, double maxFontSize = 11, double fitWidth = 0)
         {
             var fit = fitWidth > 0 ? fitWidth : width - 10;
-            var fontSize = multiline ? 10 : Math.Min(maxFontSize, fit / Math.Max(1, formFont.MeasureString(value, 1f)));
-            field.DefaultAppearance = new DefaultAppearance(PdfFormAppearance.FormFontName, fontSize, System.Drawing.Color.Black);
+            var fontSize = multiline ? 10 : Math.Min(maxFontSize, fit / Math.Max(1, font.MeasureString(value, 1f)));
+            field.DefaultAppearance = new DefaultAppearance(font, fontSize, System.Drawing.Color.Black);
         }
     }
 }
