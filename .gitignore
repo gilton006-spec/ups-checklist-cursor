@@ -49,3 +49,4 @@ dotnet/UpsChecklist.Web/appsettings.Development.local.json
 *.user
 *.suo
 .vs/
+**/__pycache__/

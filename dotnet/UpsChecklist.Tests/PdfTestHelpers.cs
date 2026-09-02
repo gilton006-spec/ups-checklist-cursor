@@ -1,6 +1,7 @@
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.AcroForms;
 using UglyToad.PdfPig.AcroForms.Fields;
+using UglyToad.PdfPig.Tokens;
 
 namespace UpsChecklist.Tests;
 
@@ -18,8 +19,25 @@ internal static class PdfTestHelpers
             ? text.Value
             : null;
 
-    public static bool CheckboxChecked(AcroForm form, string name) =>
-        form.Fields.FirstOrDefault(f => f.Information.PartialName == name) is AcroCheckboxField box && box.IsChecked;
+    public static bool CheckboxChecked(AcroForm form, string name)
+    {
+        var field = form.Fields.FirstOrDefault(f => f.Information.PartialName == name);
+        return field switch
+        {
+            AcroCheckboxField box => box.IsChecked,
+            AcroCheckboxesField => FieldNameValueIsOn(field),
+            _ => false,
+        };
+    }
+
+    private static bool FieldNameValueIsOn(AcroFieldBase field)
+    {
+        if (!field.Dictionary.TryGet(NameToken.V, out var token))
+            return false;
+
+        var value = token.ToString();
+        return value is "/Yes" or "Yes" or "/On" or "On";
+    }
 
     public static bool HasField(AcroForm form, string name) =>
         form.Fields.Any(f => f.Information.PartialName == name);
@@ -37,8 +55,7 @@ internal static class PdfTestHelpers
     public static bool HasAnyImage(byte[] bytes)
     {
         using var pdf = PdfDocument.Open(bytes);
-        return pdf.GetPages().Any(p => p.GetImages().Any()) ||
-               RawAscii(bytes).Contains("/Subtype/Image", StringComparison.Ordinal);
+        return pdf.GetPages().Any(p => p.GetImages().Any());
     }
 
     public static int ImageCount(byte[] bytes)

@@ -23,8 +23,6 @@ public class ChecklistPdfQualityTests
 
         var bytes = new ChecklistPdfCreator().Create(data);
 
-        Assert.True(bytes.Length > 400_000, $"PDF too small ({bytes.Length} bytes); workbook={Directory.Exists(Path.Combine(AppContext.BaseDirectory, "Assets", "Workbook"))}");
-
         Assert.False(PdfTestHelpers.TextFieldDefaultAppearanceUsesWhiteInk(bytes));
         Assert.False(PdfTestHelpers.ContainsInvalidArtifactBdc(bytes));
         Assert.False(PdfTestHelpers.ReferencesZaDbFont(bytes));
@@ -32,7 +30,7 @@ public class ChecklistPdfQualityTests
         var pages = PdfTestHelpers.PageSummaries(bytes);
         Assert.Equal(2, pages.Count);
         Assert.All(pages, p => Assert.True(p.TextLength > 100, $"Page {p.Page} has too little text."));
-        Assert.True(pages[0].ImageCount >= 2 || PdfTestHelpers.RawAscii(bytes).Contains("/Subtype/Image"),
+        Assert.True(pages[0].ImageCount >= 2,
             $"Page 1 image markers missing (count={pages[0].ImageCount}, size={bytes.Length}).");
 
         var form = PdfTestHelpers.RequireForm(bytes);
@@ -46,8 +44,14 @@ public class ChecklistPdfQualityTests
     }
 
     [Theory]
+    [InlineData("ps1-ps2-monday")]
     [InlineData("ps1")]
+    [InlineData("ps2")]
+    [InlineData("pd1")]
+    [InlineData("pd2")]
     [InlineData("pd3")]
+    [InlineData("pd4")]
+    [InlineData("smalls")]
     [InlineData("matrix")]
     public void Every_page_of_each_position_has_text_and_valid_form_colours(string positionId)
     {
@@ -73,5 +77,33 @@ public class ChecklistPdfQualityTests
 
         foreach (var (page, textLength, _) in PdfTestHelpers.PageSummaries(bytes))
             Assert.True(textLength > 80, $"{positionId} page {page} is missing static text.");
+    }
+
+    [Theory]
+    [InlineData("nl-NL")]
+    [InlineData("de-DE")]
+    [InlineData("fr-FR")]
+    public void Pdf_serialization_is_independent_of_request_culture(string culture)
+    {
+        var original = System.Globalization.CultureInfo.CurrentCulture;
+        var data = new ChecklistSubmission
+        {
+            PositionId = "pd3", Name = "Zoë Müller", Date = "2026-09-02",
+            Count = "7", Remarks = "Café checked.", Signature = "Zoë Müller",
+            Checks = new Dictionary<string, bool> { ["b8"] = true, ["b10"] = false },
+        };
+        try
+        {
+            System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+            var expected = new ChecklistPdfCreator().Create(data);
+            System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo(culture);
+            var actual = new ChecklistPdfCreator().Create(data);
+            Assert.Equal(expected, actual);
+            Assert.Equal(culture, System.Globalization.CultureInfo.CurrentCulture.Name);
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentCulture = original;
+        }
     }
 }

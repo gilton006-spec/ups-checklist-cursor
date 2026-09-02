@@ -10,8 +10,8 @@ The **`dotnet-migration`** branch adds a C# / ASP.NET Core Razor Pages replaceme
 | --- | --- | --- |
 | Runtime | Node.js 22+ | .NET 10 SDK only |
 | Location | Repository root | [`dotnet/UpsChecklist.Web`](dotnet/UpsChecklist.Web) |
-| Tests | `npm run test:local` (30 checks) | `dotnet test` in [`dotnet/`](dotnet/) (20 checks) |
-| PDF library | pdf-lib (ISC) | [Aspose.PDF.FOSS](https://github.com/aspose-pdf/Aspose.PDF-for-.NET) (MIT) |
+| Tests | `npm run test:local` (30 checks) | `dotnet test` plus the [PDF rendering checks](PDF_FIX_NOTES.md) |
+| PDF output | pdf-lib (ISC) | Bounded C# PDF exporter, using the bundled font and .NET only |
 
 ### Prerequisites
 

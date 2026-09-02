@@ -74,7 +74,7 @@ The test suite covers all nine PDF variants, PNG/JPEG evidence embedding, upload
 | [`dotnet/UpsChecklist.Web/Program.cs`](dotnet/UpsChecklist.Web/Program.cs) | Validated `/api/download` endpoint |
 | [`dotnet/UpsChecklist.Tests/`](dotnet/UpsChecklist.Tests/) | Automated migration tests |
 
-Commercial dependencies: **Aspose.PDF.FOSS** (MIT) for editable PDF form fields; **PdfPig** (Apache 2.0) in tests only.
+PDF generation no longer depends on Aspose or System.Drawing. The bounded C# exporter uses the bundled font and .NET compression APIs. **PdfPig** (Apache 2.0) remains a test-only dependency; MailKit remains the email dependency. See [PDF_FIX_NOTES.md](PDF_FIX_NOTES.md) for the offline export driver, rendering checks, and verification limits.
 
 ---
 
