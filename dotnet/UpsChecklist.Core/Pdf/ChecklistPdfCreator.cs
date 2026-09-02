@@ -1,10 +1,5 @@
-using Aspose.Pdf;
-using Aspose.Pdf.Annotations;
-using Aspose.Pdf.Forms;
-using Aspose.Pdf.Text;
+using System.Text;
 using UpsChecklist.Core.Models;
-using TextPosition = Aspose.Pdf.Text.Position;
-using ChecklistPosition = UpsChecklist.Core.Models.Position;
 
 namespace UpsChecklist.Core.Pdf;
 
@@ -31,13 +26,8 @@ public sealed class ChecklistPdfCreator
         var position = ChecklistPositions.Get(data.PositionId)
             ?? throw new InvalidOperationException("Unknown checklist position.");
 
-        using var document = Document.Create();
-        document.EmbedStandardFonts = true;
-        document.Info.Title = $"Sunrise {position.Label} checklist";
-        document.Info.Subject = $"Prototype from source worksheet: {position.SourceSheet}";
-        document.Info.Creator = "Position checklist prototype";
-
-        var font = LoadFont();
+        var font = new ChecklistFont(_fontPath);
+        var document = new PdfDocumentWriter(font);
         var ctx = new LayoutContext(document, font);
 
         void NewPage()
@@ -60,7 +50,7 @@ public sealed class ChecklistPdfCreator
                 NewPage();
         }
 
-        void Paragraph(string value, double size = 10, Color? color = null)
+        void Paragraph(string value, double size = 10, PdfColor? color = null)
         {
             foreach (var lineText in Wrapped(ctx, value, Cw, size))
             {
@@ -188,7 +178,8 @@ public sealed class ChecklistPdfCreator
             ctx.DrawText("Drawn signature (not identity verified)", M, ctx.Y - 11, 10, PdfPalette.Brown);
             ctx.Y -= 20;
             ctx.DrawBorder(M, ctx.Y - 53, Cw, 53, PdfPalette.Line);
-            ctx.DrawImageDataUrl(data.Drawn, M + 8, ctx.Y - 48, Cw - 16, 43);
+            // DrawImageDataUrl takes a TOP coordinate; keep the image inside its box.
+            ctx.DrawImageDataUrl(data.Drawn, M + 8, ctx.Y - 5, Cw - 16, 43);
             ctx.Y -= 67;
         }
         else
@@ -205,37 +196,24 @@ public sealed class ChecklistPdfCreator
 
         for (var index = 0; index < document.Pages.Count; index++)
         {
-            var page = document.Pages[index + 1];
-            DrawHorizontalLine(page, M, 43, Cw, 0.6, PdfPalette.Line);
-            AppendText(page, font, $"Prototype | Source: {position.SourceSheet}", M, 29, 8, PdfPalette.Muted);
-            AppendText(page, font, $"Page {index + 1} of {document.Pages.Count}", W - M - 62, 29, 8, PdfPalette.Muted);
+            var page = document.Pages[index];
+            page.Rectangle(M, 43, Cw, 0.6, PdfPalette.Line, fill: true);
+            page.Text($"Prototype | Source: {position.SourceSheet}", M, 29, 8, PdfPalette.Muted);
+            page.Text($"Page {index + 1} of {document.Pages.Count}", W - M - 62, 29, 8, PdfPalette.Muted);
         }
 
-        PdfFormAppearance.Apply(document, font);
-
-        using var stream = new MemoryStream();
-        document.Save(stream);
-        return stream.ToArray();
-    }
-
-    private Font LoadFont()
-    {
-        if (!File.Exists(_fontPath))
-            return FontRepository.FindFont("Helvetica");
-
-        var font = FontRepository.OpenFont(_fontPath);
-        font.IsEmbedded = true;
-        return font;
+        return document.Save($"Sunrise {position.Label} checklist", $"Prototype from source worksheet: {position.SourceSheet}");
     }
 
     private static List<string> Wrapped(LayoutContext ctx, string value, double width, double size)
     {
         var result = new List<string>();
-        foreach (var paragraph in value.Replace("\r", "").Split('\n'))
+        foreach (var paragraph in value.Replace("\r", "").Replace("\t", "    ").Split('\n'))
         {
             var current = "";
-            foreach (var ch in paragraph)
+            foreach (var rune in paragraph.EnumerateRunes())
             {
+                var ch = rune.ToString();
                 var next = current + ch;
                 if (current.Length > 0 && ctx.Measure(next, size) > width)
                 {
@@ -263,150 +241,63 @@ public sealed class ChecklistPdfCreator
         return result;
     }
 
-    private static void DrawHorizontalLine(Page page, double x, double y, double width, double thickness, Color color) =>
-        PdfDrawing.HorizontalLine(page, x, y, width, thickness, color);
+    private static (double Width, double Height) MeasureImage(string path, double maxWidth, double maxHeight) =>
+        PdfImage.Load(path).Fit(maxWidth, maxHeight);
 
-    private static void AppendText(Page page, Font font, string text, double x, double baseline, float size, Color color)
-    {
-        page.Paragraphs.Add(new TextFragment(text)
-        {
-            TextState =
-            {
-                Font = font,
-                FontSize = size,
-                ForegroundColor = color,
-                RenderingMode = TextRenderingMode.FillText,
-            },
-            Position = new TextPosition(x, baseline),
-        });
-    }
-
-    private static (double Width, double Height) MeasureImage(string path, double maxWidth, double maxHeight)
-    {
-        using var image = System.Drawing.Image.FromFile(path);
-        var width = image.Width * 72.0 / image.HorizontalResolution;
-        var height = image.Height * 72.0 / image.VerticalResolution;
-        var scale = Math.Min(1, Math.Min(maxWidth / width, maxHeight / height));
-        return (width * scale, height * scale);
-    }
-
-    private sealed class LayoutContext(Document document, Font font)
+    private sealed class LayoutContext(PdfDocumentWriter document, ChecklistFont font)
     {
         public double Y { get; set; }
-        private Page _page = null!;
-        private int _pageIndex;
-        private TextBoxField? _nameField;
-        private TextBoxField? _dateField;
+        private PdfPageCanvas _page = null!;
 
         public void BeginPage()
         {
-            _page = document.Pages.Add();
-            _pageIndex = document.Pages.Count;
+            _page = document.AddPage(W, H);
             Y = 0;
         }
 
         public void QueueHeaderField(string name, string value, double x, double bottom, double width, double height)
         {
-            var rect = new Rectangle(x, bottom, x + width, bottom + height);
-            if (name == "name" && _nameField is not null)
-            {
-                document.Form.Add(_nameField, _pageIndex);
-                return;
-            }
-
-            if (name == "date" && _dateField is not null)
-            {
-                document.Form.Add(_dateField, _pageIndex);
-                return;
-            }
-
-            var field = new TextBoxField(_page, rect)
-            {
-                PartialName = name,
-                Value = value,
-            };
-            PrepareTextField(field, value, width, multiline: false, maxFontSize: 10, fitWidth: name == "name" ? 300 : width - 10);
-            AddField(field);
-            if (name == "name")
-                _nameField = field;
-            else if (name == "date")
-                _dateField = field;
+            var size = Math.Min(10, (width - 10) / Math.Max(1, font.Measure(value, 1)));
+            document.TextField(_page, name, value, x, bottom, width, height, false, size);
         }
 
-        public void DrawText(string text, double x, double baseline, double size, Color color)
-        {
-            _page.Paragraphs.Add(new TextFragment(text)
-            {
-                TextState =
-                {
-                    Font = font,
-                    FontSize = (float)size,
-                    ForegroundColor = color,
-                    RenderingMode = TextRenderingMode.FillText,
-                },
-                Position = new TextPosition(x, baseline),
-            });
-        }
+        public void DrawText(string text, double x, double baseline, double size, PdfColor color) =>
+            _page.Text(text, x, baseline, size, color);
 
-        public void DrawFilledRect(double x, double bottom, double width, double height, Color color) =>
-            PdfDrawing.FillRect(_page, x, bottom, width, height, color);
+        public void DrawFilledRect(double x, double bottom, double width, double height, PdfColor color) =>
+            _page.Rectangle(x, bottom, width, height, color, fill: true);
 
-        public void DrawBorder(double x, double bottom, double width, double height, Color color) =>
-            PdfDrawing.StrokeRect(_page, x, bottom, width, height, color);
+        public void DrawBorder(double x, double bottom, double width, double height, PdfColor color) =>
+            _page.Rectangle(x, bottom, width, height, color, fill: false);
 
         public void DrawImageFile(string path, double x, double bottom, double width, double height)
         {
-            _page.AddImage(path, new Rectangle(x, bottom, x + width, bottom + height));
+            _page.Image(PdfImage.Load(path), x, bottom, width, height);
         }
 
         public (double Width, double Height) DrawImageDataUrl(string dataUrl, double x, double topY, double maxWidth, double maxHeight, bool center = false)
         {
             var comma = dataUrl.IndexOf(',');
             var bytes = Convert.FromBase64String(dataUrl[(comma + 1)..]);
-            using var image = System.Drawing.Image.FromStream(new MemoryStream(bytes));
-            var width = image.Width * 72.0 / image.HorizontalResolution;
-            var height = image.Height * 72.0 / image.VerticalResolution;
-            var scale = Math.Min(1, Math.Min(maxWidth / width, maxHeight / height));
-            var w = width * scale;
-            var h = height * scale;
+            var image = PdfImage.Read(bytes);
+            var (w, h) = image.Fit(maxWidth, maxHeight);
             var left = center ? x - w / 2 : x;
             var bottom = topY - h;
-            using var stream = new MemoryStream(bytes);
-            _page.AddImage(stream, new Rectangle(left, bottom, left + w, bottom + h));
+            _page.Image(image, left, bottom, w, h);
             return (w, h);
         }
 
         public void QueueTextField(string name, string value, double x, double bottom, double width, double height, bool multiline = false)
         {
-            var field = new TextBoxField(_page, new Rectangle(x, bottom, x + width, bottom + height))
-            {
-                PartialName = name,
-                Value = value,
-                Multiline = multiline,
-            };
-            PrepareTextField(field, value, width, multiline);
-            AddField(field);
+            var size = multiline ? 10 : Math.Min(11, (width - 10) / Math.Max(1, font.Measure(value, 1)));
+            document.TextField(_page, name, value, x, bottom, width, height, multiline, size);
         }
 
         public void QueueCheckBox(string name, bool isChecked, double x, double bottom, double width, double height)
         {
-            var field = new CheckboxField(_page, new Rectangle(x, bottom, x + width, bottom + height))
-            {
-                PartialName = name,
-                Checked = isChecked,
-            };
-            AddField(field);
+            document.Checkbox(_page, name, isChecked, x, bottom, width, height);
         }
 
-        public double Measure(string text, double size) => font.MeasureString(text, (float)size);
-
-        private void AddField(Field field) => document.Form.Add(field, _pageIndex);
-
-        private void PrepareTextField(TextBoxField field, string value, double width, bool multiline, double maxFontSize = 11, double fitWidth = 0)
-        {
-            var fit = fitWidth > 0 ? fitWidth : width - 10;
-            var fontSize = multiline ? 10 : Math.Min(maxFontSize, fit / Math.Max(1, font.MeasureString(value, 1f)));
-            field.DefaultAppearance = new DefaultAppearance(font, fontSize, System.Drawing.Color.Black);
-        }
+        public double Measure(string text, double size) => font.Measure(text, size);
     }
 }

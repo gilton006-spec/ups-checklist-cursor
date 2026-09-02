@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- This driver compiles the exact PDF sources without the web/email packages. -->
+    <RestoreSources>$(MSBuildThisFileDirectory)</RestoreSources>
+    <NuGetAudit>false</NuGetAudit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../UpsChecklist.Core/Pdf/*.cs" Link="Pdf/%(Filename)%(Extension)" />
+    <Compile Include="../../UpsChecklist.Core/Models/ChecklistModels.cs" Link="Models/ChecklistModels.cs" />
+    <Compile Include="../../UpsChecklist.Core/ChecklistPositions.cs" Link="ChecklistPositions.cs" />
+    <Compile Include="../../UpsChecklist.Tests/EvidenceFixtures.cs" Link="EvidenceFixtures.cs" />
+    <None Include="../../UpsChecklist.Core/Assets/**/*" Link="Assets/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../UpsChecklist.Core/Data/workbook-source.json" Link="Data/workbook-source.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

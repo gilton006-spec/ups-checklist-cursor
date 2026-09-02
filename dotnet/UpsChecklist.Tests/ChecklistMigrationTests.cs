@@ -135,11 +135,12 @@ public class ChecklistMigrationTests : IClassFixture<ChecklistWebApplicationFact
     public async Task Drawn_signatures_embed_without_signature_form_widget()
     {
         var position = ChecklistPositions.Get("pd4")!;
-        var data = SampleData(position, "2026-09-02", signature: "", drawn: PngDataUrl("image13.png"));
+        var data = SampleData(position, "2026-09-02", signature: "", drawn: EvidenceFixtures.TransparentSignature);
 
         var bytes = await DownloadPdfAsync(data);
         var form = PdfTestHelpers.RequireForm(bytes);
         Assert.False(PdfTestHelpers.HasField(form, "signature"));
+        Assert.True(PdfTestHelpers.HasImage(bytes, 160, 50));
         Assert.Equal(data.Name, PdfTestHelpers.TextFieldValue(form, "name"));
     }
 
@@ -150,7 +151,7 @@ public class ChecklistMigrationTests : IClassFixture<ChecklistWebApplicationFact
         var data = SampleData(position, "2026-09-02", evidencePhoto: PngDataUrl("image13.png"));
 
         var bytes = await DownloadPdfAsync(data);
-        Assert.True(PdfTestHelpers.HasAnyImage(bytes));
+        Assert.True(PdfTestHelpers.HasImage(bytes, 104, 372));
         Assert.Equal(2, PdfTestHelpers.PageCount(bytes));
         Assert.Equal(data.Signature, PdfTestHelpers.TextFieldValue(PdfTestHelpers.RequireForm(bytes), "signature"));
     }
@@ -162,7 +163,7 @@ public class ChecklistMigrationTests : IClassFixture<ChecklistWebApplicationFact
         {
             var data = SampleData(position, position.Schedule == "monday" ? "2026-09-07" : "2026-09-02", evidencePhoto: EvidenceFixtures.JpegPhoto);
             var bytes = await DownloadPdfAsync(data);
-            Assert.True(PdfTestHelpers.HasAnyImage(bytes), position.Id);
+            Assert.True(PdfTestHelpers.HasImage(bytes, 32, 24), position.Id);
         }
     }
 
