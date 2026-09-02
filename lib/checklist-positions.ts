@@ -4,8 +4,8 @@ export type CheckItem = { id: string; text: string; note?: string; sourceCell: s
 export type ReferenceImage = { file: string; label: string };
 export type CheckSection = { id: string; title: string; items: CheckItem[]; images?: ReferenceImage[]; note?: string; remarksKey?: string };
 export type Position = { id: string; label: string; title: string; sourceSheet: string; schedule?: "monday" | "other-days"; scheduleLabel?: string; sections: CheckSection[]; packageLabel: string; handover?: string; sourceNotes?: string[] };
-export type PositionDraft = { checks: Record<string, boolean>; count: string; remarks: string; sectionRemarks: Record<string, string>; signature: string; drawn: string; signatureMode: "type" | "draw" };
-export const emptyDraft = (): PositionDraft => ({ checks: {}, count: "", remarks: "", sectionRemarks: {}, signature: "", drawn: "", signatureMode: "type" });
+export type PositionDraft = { checks: Record<string, boolean>; count: string; remarks: string; sectionRemarks: Record<string, string>; evidencePhoto: string; signature: string; drawn: string; signatureMode: "type" | "draw" };
+export const emptyDraft = (): PositionDraft => ({ checks: {}, count: "", remarks: "", sectionRemarks: {}, evidencePhoto: "", signature: "", drawn: "", signatureMode: "type" });
 
 const sheets = source.sheets;
 function sheet(name: string) {

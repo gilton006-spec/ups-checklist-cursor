@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { positions, getPosition, allItems, emptyDraft, type CheckItem, type PositionDraft } from "@/lib/checklist-positions";
+import { EvidencePhoto } from "@/components/evidence-photo";
+import { WhatsAppHandover } from "@/components/whatsapp-handover";
 
 export default function Home() {
   const [date, setDate] = useState("");
@@ -16,11 +18,13 @@ export default function Home() {
   const [pickerOpen, setPickerOpen] = useState(true);
   const [drafts, setDrafts] = useState<Record<string, PositionDraft>>({});
   const [downloadStarted, setDownloadStarted] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
   const positionHeadingRef = useRef<HTMLHeadingElement>(null);
   const position = getPosition(positionId);
   const draft = drafts[positionId] ?? emptyDraft();
   const items = position ? allItems(position) : [];
   const completed = items.filter(item => draft.checks[item.id]).length;
+  const payload = JSON.stringify({ positionId, date, name, checks: draft.checks, count: draft.count, remarks: draft.remarks, sectionRemarks: draft.sectionRemarks, evidencePhoto: draft.evidencePhoto, signature: draft.signatureMode === "type" ? draft.signature : "", drawn: draft.signatureMode === "draw" ? draft.drawn : "" });
 
   useEffect(() => {
     const d = new Date();
@@ -32,7 +36,7 @@ export default function Home() {
   }, [positionId, pickerOpen]);
 
   useEffect(() => {
-    const hasEntries = name.trim() || Object.values(drafts).some(d => Object.values(d.checks).some(Boolean) || d.count || d.remarks || d.signature || d.drawn || Object.values(d.sectionRemarks).some(Boolean));
+    const hasEntries = name.trim() || Object.values(drafts).some(d => Object.values(d.checks).some(Boolean) || d.count || d.remarks || d.evidencePhoto || d.signature || d.drawn || Object.values(d.sectionRemarks).some(Boolean));
     if (!hasEntries) return;
     const warnBeforeLeaving = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", warnBeforeLeaving);
@@ -57,7 +61,7 @@ export default function Home() {
     <p className="demo-label">Demo only. Not UPS approved.</p>
     {position ? <div className="position-header"><div><h1 ref={positionHeadingRef} tabIndex={-1}>{position.label}</h1>{position.scheduleLabel && <p>{position.scheduleLabel}</p>}</div><Button type="button" variant="outline" aria-expanded={pickerOpen} aria-controls="position-picker" onClick={() => setPickerOpen(open => !open)}>{pickerOpen ? "Close" : "Change position"}</Button></div> : <div className="intro"><h1>Choose your position</h1></div>}
     {pickerOpen && <section id="position-picker" className="position-grid" aria-label="Jambreaker position">
-      {positions.map(p => <Button key={p.id} type="button" variant="outline" className={`position-button ${positionId === p.id ? "selected" : ""}`} aria-pressed={positionId === p.id} aria-label={`${p.label}${p.scheduleLabel ? `, ${p.scheduleLabel}` : ""}`} onClick={() => { setPositionId(p.id); setPickerOpen(false); changed(); }}><span>{p.label}</span>{p.scheduleLabel && <small>{p.scheduleLabel}</small>}</Button>)}
+      {positions.map(p => <Button key={p.id} type="button" variant="outline" className={`position-button ${positionId === p.id ? "selected" : ""}`} aria-pressed={positionId === p.id} aria-label={`${p.label}${p.scheduleLabel ? `, ${p.scheduleLabel}` : ""}`} onClick={() => { setPositionId(p.id); setPickerOpen(false); setPhotoBusy(false); changed(); }}><span>{p.label}</span>{p.scheduleLabel && <small>{p.scheduleLabel}</small>}</Button>)}
     </section>}
     {position && <>
       <section className="identity" aria-label="Checklist details">
@@ -75,18 +79,21 @@ export default function Home() {
       <div className="package-count"><label className="field-label" htmlFor="packages">{position.packageLabel}</label><div className="count-controls"><Button type="button" variant="outline" aria-label="Decrease package count" disabled={draft.count === "" || Number(draft.count) === 0} onClick={() => updateDraft({ count: String(Math.max(0, Number(draft.count) - 1)) })}><Minus /></Button><Input id="packages" type="text" inputMode="numeric" pattern="[0-9]*" placeholder="Count" value={draft.count} maxLength={5} onChange={e => updateDraft({ count: e.target.value.replace(/\D/g, "") })} /><Button type="button" variant="outline" aria-label="Increase package count" disabled={Number(draft.count) >= 99999} onClick={() => updateDraft({ count: String(Number(draft.count) + 1) })}><Plus /></Button><Button type="button" className="none-button" variant="outline" onClick={() => updateDraft({ count: "0" })}>None (0)</Button></div></div>
       <section className="finish-section" aria-label="Remarks and signature">
         <label className="field-label" htmlFor="remarks">Remarks <span className="optional">Optional</span></label><Textarea id="remarks" placeholder="Issues, unfinished checks or follow-up" value={draft.remarks} maxLength={2000} onChange={e => updateDraft({ remarks: e.target.value })} />
+        <EvidencePhoto key={positionId} value={draft.evidencePhoto} onChange={evidencePhoto => updateDraft({ evidencePhoto })} onBusyChange={setPhotoBusy} />
         <div className="signature-heading"><h3>Signature</h3></div>
         <Tabs value={draft.signatureMode} onValueChange={v => updateDraft({ signatureMode: v as "type" | "draw" })}><TabsList className="signature-tabs" aria-label="Signature method"><TabsTrigger value="type"><Type size={18} /> Type name</TabsTrigger><TabsTrigger value="draw"><PenLine size={18} /> Draw signature</TabsTrigger></TabsList>
           <TabsContent value="type"><label className="sr-only" htmlFor="signature">Typed signature</label><Input id="signature" className="signature-input" placeholder="Type your signature" maxLength={65} value={draft.signature} onChange={e => updateDraft({ signature: e.target.value })} /><Button type="button" variant="outline" className="use-name" disabled={!name.trim()} onClick={() => updateDraft({ signature: name })}>Use my name</Button></TabsContent>
           <TabsContent value="draw"><SignaturePad key={positionId} value={draft.drawn} onChange={drawn => updateDraft({ drawn })} /></TabsContent>
         </Tabs>
-        <p className="field-hint">PDF uses external hosting. Not sent to UPS. No report archive. Refresh clears entries.</p>
+        <p className="field-hint">PDFs and photos use external hosting. No report archive. Refresh clears entries.</p>
       </section>
       <div className="status-area" role="status" aria-live="polite">{downloadStarted && <p className="success">Check your downloads or the new tab.</p>}</div>
-      <footer className="download-bar"><form className="download-inner" action="/api/download" method="POST" target="_blank" onSubmit={() => setDownloadStarted(true)}>
-        <input type="hidden" name="checklist" value={JSON.stringify({ positionId, date, name, checks: draft.checks, count: draft.count, remarks: draft.remarks, sectionRemarks: draft.sectionRemarks, signature: draft.signatureMode === "type" ? draft.signature : "", drawn: draft.signatureMode === "draw" ? draft.drawn : "" })} />
-        <div className="progress-copy"><strong>{completed} <span>/ {items.length}</span></strong><span>{position.label} checked</span></div><Button type="submit" className="download-button"><Download />Download PDF</Button>
-      </form></footer>
+      <footer className="download-bar"><div className="download-inner">
+        <div className="progress-copy"><strong>{completed} <span>/ {items.length}</span></strong><span>{position.label} checked</span></div>
+        <div className="report-actions"><form action="/api/download" method="POST" target="_blank" onSubmit={() => setDownloadStarted(true)}>
+          <input type="hidden" name="checklist" value={payload} /><Button type="submit" className="download-button" disabled={photoBusy}><Download />Download PDF</Button>
+        </form><WhatsAppHandover key={positionId} payload={payload} positionId={positionId} date={date} hasPhoto={!!draft.evidencePhoto} disabled={photoBusy} /></div>
+      </div></footer>
     </>}
   </main>;
 }

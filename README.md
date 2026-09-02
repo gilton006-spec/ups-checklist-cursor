@@ -1,4 +1,10 @@
-# vinext-starter
+# UPS Sunrise Checklist
+
+For this application's features, Cursor setup, local commands and Git handoff, start with [CURSOR_SETUP.md](CURSOR_SETUP.md).
+
+The material below is retained starter documentation. Some platform lifecycle details are historical; use the current Sites workflow when publishing from ChatGPT.
+
+## Original starter notes
 
 A clean full-stack starter running on [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and Drizzle support.
 

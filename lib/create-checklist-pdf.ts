@@ -4,7 +4,7 @@ import { checklistFont } from "./checklist-font";
 import { workbookImages } from "./workbook-images";
 import { getPosition, scheduleWarning } from "./checklist-positions";
 
-export type ChecklistData = { positionId: string; date: string; name: string; checks: Record<string, boolean>; count: string; remarks: string; sectionRemarks: Record<string, string>; signature: string; drawn: string };
+export type ChecklistData = { positionId: string; date: string; name: string; checks: Record<string, boolean>; count: string; remarks: string; sectionRemarks: Record<string, string>; evidencePhoto: string; signature: string; drawn: string };
 const decode = (value: string) => Uint8Array.from(atob(value), c => c.charCodeAt(0));
 
 export async function createChecklistPdf(data: ChecklistData) {
@@ -136,6 +136,15 @@ export async function createChecklistPdf(data: ChecklistData) {
     paragraph("Original paper handover instruction:", 10, brown);
     paragraph(position.handover, 9);
     paragraph("Confirm the digital handover process with your team leader. Downloading does not send the report.", 9, muted);
+  }
+  if (data.evidencePhoto) {
+    const image = data.evidencePhoto.startsWith("data:image/jpeg") ? await pdf.embedJpg(data.evidencePhoto) : await pdf.embedPng(data.evidencePhoto);
+    // Reserve room for the signature so it is not stranded on a mostly empty page.
+    ensure(180 + 34 + 100);
+    const size = image.scaleToFit(CW, Math.min(360, y - 55 - 34 - 100));
+    text("Evidence photo", M, y - 11, 10, brown); y -= 20;
+    page.drawImage(image, { x: M + (CW - size.width) / 2, y: y - size.height, width: size.width, height: size.height });
+    y -= size.height + 14;
   }
   if (data.drawn) {
     ensure(85);

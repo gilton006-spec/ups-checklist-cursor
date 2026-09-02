@@ -6,6 +6,11 @@
     "node": ">=22.13.0"
   },
   "scripts": {
+    "dev:local": "node scripts/local.mjs dev",
+    "build:local": "node scripts/local.mjs build",
+    "start:local": "node scripts/local.mjs start",
+    "test:local": "npm run build:local && node --test tests/*.test.mjs",
+    "check:local": "tsc --noEmit -p tsconfig.checklist.json",
     "install:ci": "bash scripts/install-ci.sh",
     "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vite",
     "build": "bash scripts/build-verified.sh",

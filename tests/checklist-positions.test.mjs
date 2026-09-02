@@ -3,7 +3,8 @@ import test from "node:test";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import ts from "typescript";
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, PDFName, PDFRawStream } from "pdf-lib";
+import { jpegPhoto } from "./evidence-fixture.mjs";
 
 // Exercise the same position definitions used by the UI and the PDF endpoint.
 const path = new URL("../lib/checklist-positions.ts", import.meta.url);
@@ -112,6 +113,41 @@ test("drawn signatures are embedded without a white form widget hiding the image
   assert.equal(pdf.getForm().getFieldMaybe("signature"), undefined);
   assert.equal(pdf.getForm().getTextField("name").getText(), data.name);
   await writeFile(new URL("pd4-drawn.pdf", output), bytes);
+});
+
+test("portrait evidence is embedded with editable form fields intact", async () => {
+  const data = dataFor(positions.find(p => p.id === "pd4"));
+  data.evidencePhoto = "data:image/png;base64," + (await readFile(new URL("../public/workbook/image13.png", import.meta.url))).toString("base64");
+  const response = await request(data);
+  assert.equal(response.status, 200);
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  const pdf = await PDFDocument.load(bytes);
+  assert.ok(hasImage(pdf, 104, 372));
+  assert.equal(pdf.getPageCount(), 2, "photo and signature should fit together");
+  assert.equal(pdf.getForm().getTextField("signature").getText(), data.signature);
+  await writeFile(new URL("pd4-evidence.pdf", output), bytes);
+});
+
+function hasImage(pdf, width, height) {
+  return pdf.context.enumerateIndirectObjects().some(([, object]) => object instanceof PDFRawStream && object.dict.get(PDFName.of("Subtype"))?.toString() === "/Image" && object.dict.get(PDFName.of("Width"))?.asNumber() === width && object.dict.get(PDFName.of("Height"))?.asNumber() === height);
+}
+
+test("all nine positions embed JPEG camera evidence", async () => {
+  for (const position of positions) {
+    const response = await request({ ...dataFor(position), evidencePhoto: jpegPhoto });
+    assert.equal(response.status, 200, position.id);
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const pdf = await PDFDocument.load(bytes);
+    assert.ok(hasImage(pdf, 32, 24), position.id);
+    if (position.id === "pd4") await writeFile(new URL("pd4-camera-evidence.pdf", output), bytes);
+  }
+});
+
+test("unsupported, malformed and oversized evidence is rejected", async () => {
+  const data = dataFor(positions[0]);
+  for (const evidencePhoto of ["data:image/svg+xml;base64,AAAA", "data:image/jpeg;base64,AAAA", "data:image/png;base64," + "A".repeat(800001)]) assert.equal((await request({ ...data, evidencePhoto })).status, 400);
+  const large = new Request("http://localhost/api/download", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "x".repeat(1600001) });
+  assert.equal((await worker.fetch(large, env, ctx)).status, 413);
 });
 
 test("unknown positions, mismatched fields, invalid dates and overlong remarks are rejected", async () => {
