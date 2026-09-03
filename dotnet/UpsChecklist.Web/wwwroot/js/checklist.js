@@ -8,7 +8,7 @@
     drafts: {},
     downloadStarted: false,
     reportSent: "",
-    photoBusy: false,
+    photoBusy: 0,
     signatureMode: "type",
   };
 
@@ -54,7 +54,6 @@
     evidenceRoot: document.getElementById("evidence-photo-root"),
   };
 
-  let evidencePhoto = null;
   let signaturePad = null;
   let prepared = null;
   let handoverConfig = { emailAddress: "gilton93@hotmail.com", usesTempInbox: false, devInboxUrl: null };
@@ -75,7 +74,7 @@
   }
 
   function emptyDraft() {
-    return { checks: {}, count: "", remarks: "", sectionRemarks: {}, evidencePhoto: "", signature: "", drawn: "", signatureMode: "type" };
+    return { checks: {}, count: "", remarks: "", sectionRemarks: {}, beforeSortEvidencePhoto: "", evidencePhoto: "", signature: "", drawn: "", signatureMode: "type" };
   }
 
   function draft() {
@@ -101,6 +100,7 @@
       count: d.count,
       remarks: d.remarks,
       sectionRemarks: d.sectionRemarks,
+      beforeSortEvidencePhoto: d.beforeSortEvidencePhoto,
       evidencePhoto: d.evidencePhoto,
       signature: state.signatureMode === "type" ? d.signature : "",
       drawn: state.signatureMode === "draw" ? d.drawn : "",
@@ -149,6 +149,7 @@
             <label class="field-label" for="remarks-${section.remarksKey}">${section.remarksKey === "sls1" ? "SLS1 remarks" : "Recirculation remarks"} <span class="optional">Optional</span></label>
             <textarea id="remarks-${section.remarksKey}" data-remark="${section.remarksKey}" maxlength="1000">${escapeHtml(draft().sectionRemarks[section.remarksKey] || "")}</textarea>
           </div>` : ""}
+        ${section.id === "before" ? `<div data-before-evidence></div>` : ""}
       </section>`).join("");
     els.packageLabel.textContent = pos.packageLabel;
     els.packages.value = draft().count;
@@ -156,19 +157,40 @@
     els.signature.value = draft().signature;
     state.signatureMode = draft().signatureMode || "type";
     updateSignatureMode();
-    mountEvidencePhoto();
+    state.photoBusy = 0;
+    mountEvidencePhotos();
     mountSignaturePad();
     bindSectionEvents();
     updateProgress();
   }
 
-  function mountEvidencePhoto() {
-    els.evidenceRoot.innerHTML = "";
-    evidencePhoto = window.EvidencePhoto(els.evidenceRoot, {
-      onChange(value) { draft().evidencePhoto = value; changed(); },
-      onBusyChange(busy) { state.photoBusy = busy; updateActions(); },
+  function mountEvidenceWidget(root, field, label, hint) {
+    if (!root) return null;
+    root.innerHTML = "";
+    const widget = window.EvidencePhoto(root, {
+      label,
+      hint,
+      onChange(value) { draft()[field] = value; changed(); },
+      onBusyChange(busy) {
+        state.photoBusy = Math.max(0, state.photoBusy + (busy ? 1 : -1));
+        updateActions();
+      },
     });
-    evidencePhoto.setValue(draft().evidencePhoto);
+    widget.setValue(draft()[field]);
+    return widget;
+  }
+
+  function mountEvidencePhotos() {
+    mountEvidenceWidget(
+      els.sections.querySelector("[data-before-evidence]"),
+      "beforeSortEvidencePhoto",
+      "Before-sort evidence photo",
+      "Photo of the area before the sort starts. Included in your PDF. Avoid faces and parcel addresses.");
+    mountEvidenceWidget(
+      els.evidenceRoot,
+      "evidencePhoto",
+      "After-sort evidence photo",
+      "Photo after the sort, or extra evidence. Included in your PDF. Avoid faces and parcel addresses.");
   }
 
   function mountSignaturePad() {
@@ -217,7 +239,7 @@
   }
 
   function updateActions() {
-    const disabled = state.photoBusy;
+    const disabled = state.photoBusy > 0;
     els.whatsappOpen.disabled = disabled;
     els.emailOpen.disabled = disabled;
     els.statusArea.innerHTML = state.reportSent ? `<p class="success">${escapeHtml(state.reportSent)}</p>` : "";
@@ -243,7 +265,7 @@
   function selectPosition(id) {
     state.positionId = id;
     state.pickerOpen = false;
-    state.photoBusy = false;
+    state.photoBusy = 0;
     changed();
     renderShell();
     els.heading.focus({ preventScroll: true });
@@ -344,7 +366,7 @@
   els.date.value = state.date;
   window.addEventListener("beforeunload", (event) => {
     const hasEntries = state.name.trim() || Object.values(state.drafts).some((d) =>
-      Object.values(d.checks).some(Boolean) || d.count || d.remarks || d.evidencePhoto || d.signature || d.drawn || Object.values(d.sectionRemarks).some(Boolean));
+      Object.values(d.checks).some(Boolean) || d.count || d.remarks || d.beforeSortEvidencePhoto || d.evidencePhoto || d.signature || d.drawn || Object.values(d.sectionRemarks).some(Boolean));
     if (!hasEntries) return;
     event.preventDefault();
     event.returnValue = "";

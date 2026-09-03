@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using UpsChecklist.Core;
 using UpsChecklist.Core.Pdf;
+using UpsChecklist.Core.Scanners;
+using UpsChecklist.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 var localSettingsPath = Path.Combine(builder.Environment.ContentRootPath, "appsettings.Development.local.json");
@@ -32,10 +34,21 @@ if (builder.Environment.IsDevelopment() && !emailOptions.IsConfigured)
 
 builder.Services.AddRazorPages();
 builder.Services.AddSingleton<ChecklistPdfCreator>();
+builder.Services.AddSingleton<ScannerPdfCreator>();
+var scannerOptions = builder.Configuration.GetSection("ScannerLists").Get<ScannerListOptions>() ?? new ScannerListOptions();
+if (scannerOptions.ReturnInstruction is null || scannerOptions.ReturnInstruction.Length > 300
+    || scannerOptions.ReturnInstruction.Any(char.IsControl))
+    throw new InvalidOperationException("ScannerLists:ReturnInstruction must be a single line of at most 300 characters.");
+builder.Services.AddSingleton(scannerOptions);
 builder.Services.AddSingleton<HandoverEmailSender>();
 builder.Services.AddSingleton(emailOptions);
 builder.Services.AddSingleton(runtimeInfo);
 builder.Services.AddSingleton<IOptions<HandoverEmailOptions>>(_ => Options.Create(emailOptions));
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.ValueLengthLimit = ChecklistValidator.MaxBodyBytes;
+    options.MultipartBodyLengthLimit = ChecklistValidator.MaxBodyBytes;
+});
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -61,6 +74,7 @@ if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ASPNETCORE_HTTPS_P
 app.UseStaticFiles();
 app.UseRouting();
 app.MapRazorPages();
+app.MapScannerEndpoints();
 
 app.MapGet("/api/handover-config", (HandoverEmailOptions options, HandoverRuntimeInfo runtime) =>
     Results.Json(new

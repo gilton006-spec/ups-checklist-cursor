@@ -6,8 +6,8 @@ namespace UpsChecklist.Core;
 
 public static partial class ChecklistValidator
 {
-    public const int MaxBodyBytes = 1_600_000;
-    public const int MaxPayloadChars = 1_040_000;
+    public const int MaxBodyBytes = 3_200_000;
+    public const int MaxPayloadChars = 2_100_000;
 
     [GeneratedRegex(@"^\d{0,5}$")]
     private static partial Regex CountPattern();
@@ -61,7 +61,8 @@ public static partial class ChecklistValidator
             throw new ChecklistValidationException("Signature is too long.");
         if (data.Drawn.Length > 200_000 || (data.Drawn.Length > 0 && !DrawnPattern().IsMatch(data.Drawn)))
             throw new ChecklistValidationException("Invalid drawn signature.");
-        if (!EvidenceValidation.ValidEvidencePhoto(data.EvidencePhoto))
+        if (!EvidenceValidation.ValidEvidencePhoto(data.BeforeSortEvidencePhoto)
+            || !EvidenceValidation.ValidEvidencePhoto(data.EvidencePhoto))
             throw new ChecklistValidationException("Invalid evidence photo.");
 
         foreach (var remark in data.SectionRemarks.Values)

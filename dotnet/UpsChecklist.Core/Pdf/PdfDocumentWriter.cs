@@ -102,6 +102,16 @@ internal sealed class PdfDocumentWriter(ChecklistFont font)
         Widget(page, field, x, bottom, width, height, $"/AS {state} /AP << /N << /Off {Ref(off)} /Yes {Ref(on)} >> >>");
     }
 
+    // Scanner table cells use soft-wrapped appearances without inserting newlines
+    // into the actual form value. Existing checklist field behavior is unchanged.
+    public void WrappedTextField(PdfPageCanvas page, string name, string value, string displayValue,
+        double x, double bottom, double width, double height, double size)
+    {
+        var field = GetField(name, value, 4096, false, size);
+        var ap = Appearance(PdfFormAppearance.Text(font, displayValue, width, height, size, true), width, height);
+        Widget(page, field, x, bottom, width, height, $"/AP << /N {Ref(ap)} >>");
+    }
+
     private Field GetField(string name, string value, int flags, bool checkbox, double size)
     {
         if (_fields.TryGetValue(name, out var field))

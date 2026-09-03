@@ -3,9 +3,11 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>UPS Sunrise Position Checklists</title>
+    <title>@ViewData["Title"]</title>
     <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="~/css/checklist.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/workflow-nav.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
     @RenderBody()

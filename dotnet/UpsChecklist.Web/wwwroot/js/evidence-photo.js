@@ -1,7 +1,8 @@
-window.EvidencePhoto = function EvidencePhoto(root, { onChange, onBusyChange }) {
+window.EvidencePhoto = function EvidencePhoto(root, { onChange, onBusyChange, label, hint }) {
+  const title = label || "Evidence photo";
   root.innerHTML = `
-    <section class="evidence-photo" aria-label="Evidence photo">
-      <p class="field-label">Evidence photo <span class="optional">Optional</span></p>
+    <section class="evidence-photo" aria-label="${title}">
+      <p class="field-label">${title} <span class="optional">Optional</span></p>
       <div class="photo-actions">
         <button type="button" class="btn secondary" data-action="camera">Take photo</button>
         <button type="button" class="btn secondary" data-action="gallery">Choose photo</button>
@@ -11,10 +12,10 @@ window.EvidencePhoto = function EvidencePhoto(root, { onChange, onBusyChange }) 
       <p class="hidden" role="status" data-status></p>
       <p class="photo-error hidden" role="alert" data-error></p>
       <div class="photo-preview hidden" data-preview>
-        <img alt="Evidence photo preview" data-img />
+        <img alt="${title} preview" data-img />
         <button type="button" class="btn secondary" data-remove>Remove photo</button>
       </div>
-      <p class="field-hint">Included in your PDF. Avoid faces and parcel addresses.</p>
+      <p class="field-hint">${hint || "Included in your PDF. Avoid faces and parcel addresses."}</p>
     </section>`;
 
   let value = "";

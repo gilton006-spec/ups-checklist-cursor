@@ -1,0 +1,31 @@
+.scanner-page{padding-bottom:32px}
+.scanner-page [hidden]{display:none!important}
+.scanner-selectors{display:grid;grid-template-columns:1fr 1.4fr;gap:18px;margin:24px 0;background:#fff;border:1px solid #d5d9dd;padding:20px;border-radius:13px}
+.scanner-selectors>div{min-width:0}
+.scanner-page select{width:100%;min-height:52px;padding:12px 8px;font:inherit;background:#fff;color:#251b13;border:1px solid #b8bfc5;border-radius:9px}
+.scanner-version{margin:8px 0 0;color:#156082;font-size:14px;font-weight:700}
+.scanner-notice{padding:16px;margin:16px 0;border-left:4px solid #1f4f82;border-radius:6px;background:#eaf0f7;overflow-wrap:anywhere}
+.scanner-notice p{margin:6px 0 0}
+.scanner-title-block{text-align:right;margin:0 0 10px}
+.scanner-title-block h2{margin:0;font-size:22px;font-weight:700}
+.scanner-day{display:inline-block;margin:8px 0 0;padding:4px 14px;font-weight:700;font-size:16px}
+.scanner-day[data-day="monday"]{background:#dcedd5}
+.scanner-day[data-day="tuesday-friday"]{background:#6fc4e6}
+.scanner-sheet-wrap{overflow-x:auto;background:#fff;border:1px solid #7f7f7f}
+.scanner-sheet{width:100%;min-width:920px;border-collapse:collapse;font-size:14px;background:#fff}
+.scanner-sheet th{background:#cfeaf6;font-weight:700;text-align:left;padding:8px 6px;border:1px solid #7f7f7f;white-space:nowrap}
+.scanner-sheet td{border:1px solid #7f7f7f;padding:4px 6px;vertical-align:middle}
+.scanner-name{font-weight:700;white-space:nowrap}
+.scanner-two-piece{background:#dcedd5;font-weight:700;text-align:center;white-space:nowrap}
+.scanner-excel-line td{background:#ecd4e9;font-weight:700;padding:10px 12px}
+.scanner-comments-cell{min-width:180px}
+.scanner-printed-note{margin:0 0 4px;color:#412511}
+.scanner-sheet input,.scanner-sheet textarea{width:100%;min-height:40px;border:1px solid #b8bfc5;border-radius:4px;padding:6px;font:inherit;background:#fff;box-sizing:border-box}
+.scanner-sheet textarea{min-height:40px;resize:vertical}
+.scanner-actions{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;background:#fff;border:1px solid #d5d9dd;border-radius:13px;padding:16px;margin-top:16px}
+.scanner-actions p{margin:0}
+.scanner-actions button{min-height:52px}
+.scanner-page button:disabled{opacity:.55;cursor:not-allowed}
+.scanner-page input:focus-visible,.scanner-page select:focus-visible,.scanner-page textarea:focus-visible,.scanner-page button:focus-visible{outline:3px solid #1f4f82;outline-offset:3px}
+#scanner-status{overflow-wrap:anywhere}
+@media(max-width:540px){.scanner-selectors{grid-template-columns:1fr}.scanner-actions button{width:100%}.scanner-title-block{text-align:left}}

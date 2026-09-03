@@ -1,0 +1,58 @@
+@page "/Scanners"
+@model UpsChecklist.Web.Pages.ScannersModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Sunrise Scanner Lists";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/scanners.css" asp-append-version="true" />
+}
+<main class="page-shell scanner-page" id="scanner-app">
+    <header class="topbar">
+        <div class="wordmark">
+            <img src="/workbook/image1.png" alt="UPS" width="47" height="47" />
+            <span>Shift <span class="wordmark-light">Checklist</span></span>
+        </div>
+        <span class="shift">Sunrise</span>
+    </header>
+    <nav class="workflow-nav" aria-label="Forms">
+        <a href="/">Jambreakers</a>
+        <a href="/Scanners" aria-current="page">Scanner lists</a>
+    </nav>
+    <p class="demo-label">Demo only. Not UPS approved.</p>
+    <h1>Scanner lists</h1>
+    <p class="field-hint">Choose the date and list. Fill in Handover to and Scanner# like the Excel sheet.</p>
+    <form id="scanner-form" autocomplete="off">
+        @Html.AntiForgeryToken()
+        <div class="scanner-selectors">
+            <div>
+                <label class="field-label" for="scanner-date">Date</label>
+                <input type="date" id="scanner-date" required />
+                <p id="scanner-version" class="scanner-version" role="status"></p>
+            </div>
+            <div>
+                <label class="field-label" for="scanner-sheet">List</label>
+                <select id="scanner-sheet" aria-describedby="scanner-version" disabled></select>
+            </div>
+        </div>
+        <p id="scanner-unavailable" class="scanner-notice" hidden></p>
+        <section aria-labelledby="scanner-list-title" id="scanner-list-panel" hidden>
+            <div class="scanner-title-block">
+                <h2 id="scanner-list-title"></h2>
+                <p id="scanner-day-label" class="scanner-day"></p>
+            </div>
+            <div id="scanner-rows" class="scanner-sheet-wrap"></div>
+        </section>
+        <p class="field-hint">Entries stay on this page only. Refreshing or leaving clears them. Downloading does not send the report.</p>
+        <div class="scanner-actions">
+            <p id="scanner-progress" role="status"></p>
+            <button type="submit" class="btn primary" id="scanner-download" disabled>Download PDF</button>
+        </div>
+        <p id="scanner-status" role="status" aria-live="polite"></p>
+    </form>
+    <noscript>Enable JavaScript to fill in a scanner list and download its PDF.</noscript>
+</main>
+@section Scripts {
+    <script id="scanner-source" type="application/json">@Html.Raw(Model.CatalogJson)</script>
+    <script type="module" src="~/js/scanners.js" asp-append-version="true"></script>
+}

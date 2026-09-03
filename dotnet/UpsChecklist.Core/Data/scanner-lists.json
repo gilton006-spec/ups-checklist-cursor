@@ -1,0 +1,1088 @@
+[
+  {
+    "id": "monday",
+    "label": "Monday",
+    "sourceFile": "01 Scanner lijst Monday.xlsx",
+    "sourceSha256": "eacd743817f6899365b8e34c4c3f91745d2624d0b94182ee7240eed0db65b0d8",
+    "sheets": [
+      {
+        "id": "inbound",
+        "sourceSheet": "Inbound",
+        "title": "Scanner list Inbound",
+        "headers": [
+          "User name",
+          "Gost",
+          "Scan. Need.",
+          "Position",
+          "Handover to",
+          "Scanner#",
+          "Comments"
+        ],
+        "rows": [
+          {
+            "userName": "Keulen 01",
+            "gost": "x",
+            "scannerType": "Two piece",
+            "position": "",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "no login needed",
+            "id": "r5",
+            "sourceRow": 5
+          },
+          {
+            "userName": "Keulen 02",
+            "gost": "x",
+            "scannerType": "Two piece",
+            "position": "",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "no login needed",
+            "id": "r7",
+            "sourceRow": 7
+          },
+          {
+            "userName": "Herne 01",
+            "gost": "x",
+            "scannerType": "Two piece",
+            "position": "",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "no login needed",
+            "id": "r9",
+            "sourceRow": 9
+          }
+        ],
+        "instructions": []
+      },
+      {
+        "id": "pd1",
+        "sourceSheet": "PD1",
+        "title": "Scanner list pd1 1 of 2",
+        "headers": [
+          "User name",
+          "Gost",
+          "Scan. Need.",
+          "Position",
+          "Handover to",
+          "Scanner#",
+          "Comments"
+        ],
+        "rows": [
+          {
+            "userName": "Nedline",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "60 / 61",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r5",
+            "sourceRow": 5
+          },
+          {
+            "userName": "Sbr",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "58 / 59",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r7",
+            "sourceRow": 7
+          },
+          {
+            "userName": "Footlocker",
+            "gost": "FOR",
+            "scannerType": "One piece",
+            "position": "56 / 57",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r9",
+            "sourceRow": 9
+          },
+          {
+            "userName": "Tommy",
+            "gost": "TOM",
+            "scannerType": "One piece",
+            "position": "54 / 55",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r11",
+            "sourceRow": 11
+          },
+          {
+            "userName": "Envista",
+            "gost": "ENV",
+            "scannerType": "One piece",
+            "position": "53",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r13",
+            "sourceRow": 13
+          },
+          {
+            "userName": "New Balance",
+            "gost": "NEB",
+            "scannerType": "One piece",
+            "position": "51 / 52",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r15",
+            "sourceRow": 15
+          },
+          {
+            "userName": "HP",
+            "gost": "HPB",
+            "scannerType": "One piece",
+            "position": "50",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r17",
+            "sourceRow": 17
+          },
+          {
+            "userName": "Clipper",
+            "gost": "",
+            "scannerType": "One piece",
+            "position": "49",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r19",
+            "sourceRow": 19
+          },
+          {
+            "userName": "Arrow",
+            "gost": "ARR",
+            "scannerType": "One piece",
+            "position": "1102",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r21",
+            "sourceRow": 21
+          },
+          {
+            "userName": "Arrow Rest",
+            "gost": "ARO",
+            "scannerType": "One piece",
+            "position": "SCS",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r23",
+            "sourceRow": 23
+          },
+          {
+            "userName": "Arvato Rest",
+            "gost": "",
+            "scannerType": "One piece",
+            "position": "1102",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r25",
+            "sourceRow": 25
+          },
+          {
+            "userName": "72 Hold 01",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "44 / 45 / 46",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r27",
+            "sourceRow": 27
+          },
+          {
+            "userName": "72 Hold 02",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "44 / 45 / 46",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "no login needed",
+            "id": "r29",
+            "sourceRow": 29
+          },
+          {
+            "userName": "72 Hold 03",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "44 / 45 / 46",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "no login needed",
+            "id": "r31",
+            "sourceRow": 31
+          },
+          {
+            "userName": "Lenovo",
+            "gost": "",
+            "scannerType": "One piece",
+            "position": "39",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r33",
+            "sourceRow": 33
+          },
+          {
+            "userName": "Stockx 01",
+            "gost": "STX",
+            "scannerType": "One piece",
+            "position": "41 / 42",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r35",
+            "sourceRow": 35
+          },
+          {
+            "userName": "Stockx 02",
+            "gost": "STX",
+            "scannerType": "One piece",
+            "position": "41 / 42",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "no login needed",
+            "id": "r37",
+            "sourceRow": 37
+          },
+          {
+            "userName": "Ossur",
+            "gost": "OSS",
+            "scannerType": "One piece",
+            "position": "43",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r39",
+            "sourceRow": 39
+          }
+        ],
+        "instructions": []
+      },
+      {
+        "id": "pd2",
+        "sourceSheet": "PD2",
+        "title": "Scanner list pd1 2 of 2",
+        "headers": [
+          "User name",
+          "Gost",
+          "Scan. Need.",
+          "Position",
+          "Handover to",
+          "Scanner#",
+          "Comments"
+        ],
+        "rows": [
+          {
+            "userName": "Repack",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "REP Area",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r5",
+            "sourceRow": 5
+          },
+          {
+            "userName": "Repack Future",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "REP Area",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r7",
+            "sourceRow": 7
+          },
+          {
+            "userName": "Premier",
+            "gost": "x",
+            "scannerType": "Two piece",
+            "position": "Pre Holds",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r9",
+            "sourceRow": 9
+          }
+        ],
+        "instructions": []
+      },
+      {
+        "id": "pd3",
+        "sourceSheet": "PD3",
+        "title": "Scanner list pd3",
+        "headers": [
+          "User name",
+          "Gost",
+          "Scan. Need.",
+          "Position",
+          "Handover to",
+          "Scanner#",
+          "Comments"
+        ],
+        "rows": [
+          {
+            "userName": "Gilze",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "120 / 121 /122",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r5",
+            "sourceRow": 5
+          },
+          {
+            "userName": "Missort",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "124 / 125",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r7",
+            "sourceRow": 7
+          },
+          {
+            "userName": "World Ease",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "126",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r9",
+            "sourceRow": 9
+          },
+          {
+            "userName": "Syncreon",
+            "gost": "APW",
+            "scannerType": "One piece",
+            "position": "127",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r11",
+            "sourceRow": 11
+          },
+          {
+            "userName": "Exceptions 1",
+            "gost": "x",
+            "scannerType": "Two piece",
+            "position": "",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "no login needed",
+            "id": "r15",
+            "sourceRow": 15
+          },
+          {
+            "userName": "Exceptions 2",
+            "gost": "x",
+            "scannerType": "Two piece",
+            "position": "",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "no login needed",
+            "id": "r17",
+            "sourceRow": 17
+          }
+        ],
+        "instructions": []
+      },
+      {
+        "id": "pd4",
+        "sourceSheet": "PD4",
+        "title": "Scanner list pd4",
+        "headers": [
+          "User name",
+          "Gost",
+          "Scan. Need.",
+          "Position",
+          "Handover to",
+          "Scanner#",
+          "Comments"
+        ],
+        "rows": [
+          {
+            "userName": "Ucargo",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "142 / 143 / 144",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r5",
+            "sourceRow": 5
+          },
+          {
+            "userName": "Suit Supply",
+            "gost": "SUI",
+            "scannerType": "One piece",
+            "position": "150",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r7",
+            "sourceRow": 7
+          },
+          {
+            "userName": "Lamp en Licht",
+            "gost": "LAM",
+            "scannerType": "One piece",
+            "position": "149",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r9",
+            "sourceRow": 9
+          },
+          {
+            "userName": "Zevenbergen",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "152 / 153 / 154",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r11",
+            "sourceRow": 11
+          },
+          {
+            "userName": "Apple Breda 01",
+            "gost": "APP",
+            "scannerType": "One piece",
+            "position": "156 / 157",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r13",
+            "sourceRow": 13
+          },
+          {
+            "userName": "Apple Breda 02",
+            "gost": "APP",
+            "scannerType": "One piece",
+            "position": "156 / 157",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "no login needed",
+            "id": "r15",
+            "sourceRow": 15
+          },
+          {
+            "userName": "Exceptions 1",
+            "gost": "x",
+            "scannerType": "Two piece",
+            "position": "",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "no login needed",
+            "id": "r19",
+            "sourceRow": 19
+          },
+          {
+            "userName": "Exceptions 2",
+            "gost": "x",
+            "scannerType": "Two piece",
+            "position": "",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "no login needed",
+            "id": "r21",
+            "sourceRow": 21
+          }
+        ],
+        "instructions": []
+      }
+    ]
+  },
+  {
+    "id": "tuesday-friday",
+    "label": "Tuesday / Friday",
+    "sourceFile": "01 Scanner lijst Tuesday-Friday.xlsx",
+    "sourceSha256": "2d1e73549a0600694da95f2a1fe1cab3863e54af28204ac4aac0fb4fde8e31a9",
+    "sheets": [
+      {
+        "id": "inbound",
+        "sourceSheet": "Inbound",
+        "title": "Scanner list Inbound",
+        "headers": [
+          "User name",
+          "Gost",
+          "Scan. Need.",
+          "Position",
+          "Handover to",
+          "Scanner#",
+          "Comments"
+        ],
+        "rows": [
+          {
+            "userName": "Keulen 01",
+            "gost": "x",
+            "scannerType": "Two piece",
+            "position": "",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "No login needed",
+            "id": "r5",
+            "sourceRow": 5
+          },
+          {
+            "userName": "Keulen 02",
+            "gost": "x",
+            "scannerType": "Two piece",
+            "position": "",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "No login needed",
+            "id": "r7",
+            "sourceRow": 7
+          },
+          {
+            "userName": "Herne 01",
+            "gost": "x",
+            "scannerType": "Two piece",
+            "position": "",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "No login needed",
+            "id": "r9",
+            "sourceRow": 9
+          }
+        ],
+        "instructions": [
+          {
+            "text": "All with a safety cover",
+            "sourceCell": "A11"
+          }
+        ]
+      },
+      {
+        "id": "pd1",
+        "sourceSheet": "PD1",
+        "title": "Scanner list pd1",
+        "headers": [
+          "User name",
+          "Gost",
+          "Scan. Need.",
+          "Position",
+          "Handover to",
+          "Scanner#",
+          "Comments"
+        ],
+        "rows": [
+          {
+            "userName": "Nedline",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "60 / 61",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r5",
+            "sourceRow": 5
+          },
+          {
+            "userName": "Sbr",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "58 / 59",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r7",
+            "sourceRow": 7
+          },
+          {
+            "userName": "Footlocker",
+            "gost": "FOR",
+            "scannerType": "One piece",
+            "position": "56 / 57",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r9",
+            "sourceRow": 9
+          },
+          {
+            "userName": "Footlocker2",
+            "gost": "TOM",
+            "scannerType": "One piece",
+            "position": "56 / 57",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "No login needed",
+            "id": "r11",
+            "sourceRow": 11
+          },
+          {
+            "userName": "Tommy",
+            "gost": "TOM",
+            "scannerType": "One piece",
+            "position": "54 / 55",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r13",
+            "sourceRow": 13
+          },
+          {
+            "userName": "Tommy2",
+            "gost": "ENV",
+            "scannerType": "One piece",
+            "position": "54 / 55",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "No login needed",
+            "id": "r15",
+            "sourceRow": 15
+          },
+          {
+            "userName": "Envista",
+            "gost": "ENV",
+            "scannerType": "One piece",
+            "position": "53",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r17",
+            "sourceRow": 17
+          },
+          {
+            "userName": "New Balance",
+            "gost": "NEB",
+            "scannerType": "One piece",
+            "position": "51 / 52",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r19",
+            "sourceRow": 19
+          },
+          {
+            "userName": "New Balance2",
+            "gost": "HPB",
+            "scannerType": "One piece",
+            "position": "51 / 52",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "No login needed",
+            "id": "r21",
+            "sourceRow": 21
+          },
+          {
+            "userName": "HP",
+            "gost": "HPB",
+            "scannerType": "One piece",
+            "position": "50",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r23",
+            "sourceRow": 23
+          },
+          {
+            "userName": "Clipper",
+            "gost": "",
+            "scannerType": "One piece",
+            "position": "49",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r25",
+            "sourceRow": 25
+          },
+          {
+            "userName": "Arrow",
+            "gost": "ARR",
+            "scannerType": "One piece",
+            "position": "1102",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r27",
+            "sourceRow": 27
+          },
+          {
+            "userName": "Arrow Rest",
+            "gost": "ARO",
+            "scannerType": "One piece",
+            "position": "SCS",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r29",
+            "sourceRow": 29
+          },
+          {
+            "userName": "Arvato Rest",
+            "gost": "",
+            "scannerType": "One piece",
+            "position": "1102",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r31",
+            "sourceRow": 31
+          }
+        ],
+        "instructions": []
+      },
+      {
+        "id": "pd2",
+        "sourceSheet": "PD2",
+        "title": "Scanner list pd2",
+        "headers": [
+          "User name",
+          "Gost",
+          "Scan. Need.",
+          "Position",
+          "Handover to",
+          "Scanner#",
+          "Comments"
+        ],
+        "rows": [
+          {
+            "userName": "72 Hold 01",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "93 / 94/ 95",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r5",
+            "sourceRow": 5
+          },
+          {
+            "userName": "72 Hold 02",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "93 / 94/ 95",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "No login needed",
+            "id": "r7",
+            "sourceRow": 7
+          },
+          {
+            "userName": "72 Hold 03",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "93 / 94/ 95",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "No login needed",
+            "id": "r9",
+            "sourceRow": 9
+          },
+          {
+            "userName": "Zevenbergen",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "82 / 83 / 84",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r11",
+            "sourceRow": 11
+          },
+          {
+            "userName": "Lenovo",
+            "gost": "",
+            "scannerType": "One piece",
+            "position": "78",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r13",
+            "sourceRow": 13
+          },
+          {
+            "userName": "Apple Breda 01",
+            "gost": "APP",
+            "scannerType": "One piece",
+            "position": "76 / 77",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r15",
+            "sourceRow": 15
+          },
+          {
+            "userName": "Apple Breda 02",
+            "gost": "APP",
+            "scannerType": "One piece",
+            "position": "76 / 77",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "No login needed",
+            "id": "r17",
+            "sourceRow": 17
+          },
+          {
+            "userName": "Stockx 01",
+            "gost": "STX",
+            "scannerType": "One piece",
+            "position": "73 / 74",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r19",
+            "sourceRow": 19
+          },
+          {
+            "userName": "Stockx 02",
+            "gost": "STX",
+            "scannerType": "One piece",
+            "position": "73 / 74",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "No login needed",
+            "id": "r21",
+            "sourceRow": 21
+          },
+          {
+            "userName": "Stockx 03",
+            "gost": "STX",
+            "scannerType": "One piece",
+            "position": "73 / 74",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "No login needed",
+            "id": "r23",
+            "sourceRow": 23
+          },
+          {
+            "userName": "Ossur",
+            "gost": "OSS",
+            "scannerType": "One piece",
+            "position": "72",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r25",
+            "sourceRow": 25
+          },
+          {
+            "userName": "Repack",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "REP Area",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "No login needed",
+            "id": "r27",
+            "sourceRow": 27
+          },
+          {
+            "userName": "Premier",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "Pre Holds",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "No login needed",
+            "id": "r29",
+            "sourceRow": 29
+          },
+          {
+            "userName": "Repack Future",
+            "gost": "x",
+            "scannerType": "Two piece",
+            "position": "REP Area",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "No login needed",
+            "id": "r31",
+            "sourceRow": 31
+          }
+        ],
+        "instructions": [
+          {
+            "text": "All two piece with a safety cover",
+            "sourceCell": "B33"
+          }
+        ]
+      },
+      {
+        "id": "pd3",
+        "sourceSheet": "PD3",
+        "title": "Scanner list pd3",
+        "headers": [
+          "User name",
+          "Gost",
+          "Scan. Need.",
+          "Position",
+          "Handover to",
+          "Scanner#",
+          "Comments"
+        ],
+        "rows": [
+          {
+            "userName": "Gilze",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "120 / 121 /122",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r5",
+            "sourceRow": 5
+          },
+          {
+            "userName": "Missort",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "124 / 125",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r7",
+            "sourceRow": 7
+          },
+          {
+            "userName": "World Ease",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "126",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r9",
+            "sourceRow": 9
+          },
+          {
+            "userName": "Syncreon",
+            "gost": "APW",
+            "scannerType": "One piece",
+            "position": "127",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r11",
+            "sourceRow": 11
+          },
+          {
+            "userName": "Exceptions 1",
+            "gost": "x",
+            "scannerType": "Two piece",
+            "position": "",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "No login needed",
+            "id": "r15",
+            "sourceRow": 15
+          },
+          {
+            "userName": "Exceptions 2",
+            "gost": "x",
+            "scannerType": "Two piece",
+            "position": "",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "No login needed",
+            "id": "r17",
+            "sourceRow": 17
+          }
+        ],
+        "instructions": [
+          {
+            "text": "All two piece with a safety cover",
+            "sourceCell": "B19"
+          }
+        ]
+      },
+      {
+        "id": "pd4",
+        "sourceSheet": "PD4",
+        "title": "Scanner list pd4",
+        "headers": [
+          "User name",
+          "Gost",
+          "Scan. Need.",
+          "Position",
+          "Handover to",
+          "Scanner#",
+          "Comments"
+        ],
+        "rows": [
+          {
+            "userName": "Ucargo",
+            "gost": "x",
+            "scannerType": "One piece",
+            "position": "142 / 143 / 144",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r5",
+            "sourceRow": 5
+          },
+          {
+            "userName": "Suit Supply",
+            "gost": "SUI",
+            "scannerType": "One piece",
+            "position": "150",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r7",
+            "sourceRow": 7
+          },
+          {
+            "userName": "Lamp en Licht",
+            "gost": "LAM",
+            "scannerType": "One piece",
+            "position": "149",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "",
+            "id": "r9",
+            "sourceRow": 9
+          },
+          {
+            "userName": "Exceptions 1",
+            "gost": "x",
+            "scannerType": "Two piece",
+            "position": "",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "No login needed",
+            "id": "r13",
+            "sourceRow": 13
+          },
+          {
+            "userName": "Exceptions 2",
+            "gost": "x",
+            "scannerType": "Two piece",
+            "position": "",
+            "handoverTo": "",
+            "scannerNumber": "",
+            "note": "No login needed",
+            "id": "r15",
+            "sourceRow": 15
+          }
+        ],
+        "instructions": [
+          {
+            "text": "All two piece with a safety cover",
+            "sourceCell": "B17"
+          }
+        ]
+      }
+    ]
+  }
+]
