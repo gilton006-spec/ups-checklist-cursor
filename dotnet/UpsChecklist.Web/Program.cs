@@ -1,4 +1,5 @@
 using System.Text;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using UpsChecklist.Core;
 using UpsChecklist.Core.Pdf;
@@ -36,7 +37,16 @@ builder.Services.AddSingleton(emailOptions);
 builder.Services.AddSingleton(runtimeInfo);
 builder.Services.AddSingleton<IOptions<HandoverEmailOptions>>(_ => Options.Create(emailOptions));
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 if (!app.Environment.IsDevelopment())
 {
@@ -44,7 +54,10 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ASPNETCORE_HTTPS_PORT"))
+    || app.Configuration["Kestrel:Endpoints:Https:Url"] is not null)
+    app.UseHttpsRedirection();
+
 app.UseStaticFiles();
 app.UseRouting();
 app.MapRazorPages();
