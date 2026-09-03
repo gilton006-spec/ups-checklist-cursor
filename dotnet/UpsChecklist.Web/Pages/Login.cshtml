@@ -1,0 +1,71 @@
+@page
+@model UpsChecklist.Web.Pages.LoginModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Shift login";
+}
+<main class="page-shell login-page">
+    <header class="topbar">
+        <div class="wordmark">
+            <img src="/workbook/image1.png" alt="UPS" width="47" height="47" />
+            <span>Shift <span class="wordmark-light">Checklist</span></span>
+        </div>
+        <span class="shift">Sunrise</span>
+    </header>
+    <p class="demo-label">Demo only. Not UPS approved.</p>
+    <h1>Enter shift password</h1>
+    <p class="field-hint">Shared access for this shift demo. Letters are entered in lowercase.</p>
+    <form method="post" class="login-card" autocomplete="current-password">
+        @Html.AntiForgeryToken()
+        <label class="field-label" for="password">Password</label>
+        <input id="password"
+               name="Password"
+               type="password"
+               class="login-password"
+               autofocus
+               required
+               maxlength="64"
+               autocapitalize="off"
+               autocomplete="current-password"
+               spellcheck="false"
+               inputmode="text"
+               lang="en"
+               value="@Model.Password" />
+        @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+        {
+            <p class="photo-error" role="alert">@Model.ErrorMessage</p>
+        }
+        <button type="submit" class="btn primary login-submit">Continue</button>
+    </form>
+</main>
+@section Styles {
+    <style>
+        .login-page { padding-bottom: 48px; }
+        .login-card {
+            margin-top: 18px;
+            padding: 22px;
+            background: #fff;
+            border: 1px solid #d5d9dd;
+            border-radius: 15px;
+            max-width: 420px;
+        }
+        .login-password {
+            text-transform: lowercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 14px;
+        }
+        .login-submit { width: 100%; min-height: 52px; margin-top: 8px; }
+    </style>
+}
+@section Scripts {
+    <script>
+        (() => {
+            const input = document.getElementById("password");
+            if (!input) return;
+            const toLower = () => { input.value = input.value.toLowerCase(); };
+            input.addEventListener("input", toLower);
+            input.addEventListener("blur", toLower);
+            input.form?.addEventListener("submit", toLower);
+        })();
+    </script>
+}

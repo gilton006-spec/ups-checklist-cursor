@@ -1,0 +1,26 @@
+name: .NET checklist
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dotnet
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Restore and test
+        run: |
+          dotnet test UpsChecklist.Tests/UpsChecklist.Tests.csproj --nologo --configuration Release
+          node --test tools/ScannerRegressionTests/*.test.mjs
+      - name: Scanner endpoint regression
+        run: dotnet run --project tools/ScannerRegressionTests --configuration Release -- /tmp/scanner-pdfs

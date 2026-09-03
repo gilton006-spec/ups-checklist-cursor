@@ -21,6 +21,9 @@ test('drafts survive list changes but never leak across dates, versions or lists
     assert.deepEqual(store.get(...args), {});
   }
   assert.equal(store.get('2026-09-07', 'monday', 'pd1').r5.scannerNumber, 'SC-12');
+  const clone = createDraftStore();
+  clone.replaceAll(store.exportMap());
+  assert.equal(clone.get('2026-09-07', 'monday', 'pd1').r5.handoverTo, 'QA Test');
 });
 test('progress counts assignments, not merely edited or whitespace-only rows', () => {
   const sheet = { rows: [{ id: 'r5' }, { id: 'r7' }, { id: 'r9' }] };

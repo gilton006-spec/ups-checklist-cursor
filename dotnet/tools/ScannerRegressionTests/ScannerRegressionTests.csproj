@@ -14,7 +14,10 @@
     <Compile Include="../../UpsChecklist.Core/Scanners/*.cs" Link="Scanners/%(Filename)%(Extension)" />
     <Compile Include="../../UpsChecklist.Core/Models/ChecklistModels.cs" Link="Models/ChecklistModels.cs" />
     <Compile Include="../../UpsChecklist.Core/ChecklistPositions.cs" Link="ChecklistPositions.cs" />
+    <Compile Include="../../UpsChecklist.Core/Reporting/*.cs" Link="Reporting/%(Filename)%(Extension)" />
+    <Compile Include="../../UpsChecklist.Core/SiteAccessOptions.cs" Link="SiteAccessOptions.cs" />
     <Compile Include="../../UpsChecklist.Web/ScannerEndpoints.cs" Link="ScannerEndpoints.cs" />
+    <Compile Include="../../UpsChecklist.Web/Http/*.cs" Link="Http/%(Filename)%(Extension)" />
     <Compile Include="../../UpsChecklist.Web/Pages/**/*.cs" Link="Pages/%(RecursiveDir)%(Filename)%(Extension)" />
     <Content Include="../../UpsChecklist.Web/Pages/**/*.cshtml" Link="Pages/%(RecursiveDir)%(Filename)%(Extension)" />
     <EmbeddedResource Include="../../UpsChecklist.Core/Data/scanner-lists.json" LogicalName="scanner-lists.json" />

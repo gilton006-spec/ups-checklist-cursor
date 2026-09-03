@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\UpsChecklist.Core\UpsChecklist.Core.csproj" />
+    <PackageReference Include="MailKit" Version="4.16.0" />
   </ItemGroup>
 
   <PropertyGroup>

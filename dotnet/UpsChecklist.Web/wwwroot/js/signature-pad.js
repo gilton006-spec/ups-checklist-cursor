@@ -1,6 +1,11 @@
+import { createImageRestore } from "./signature-restore.mjs";
+
 window.SignaturePad = function SignaturePad(canvas, onChange) {
   const drawing = { active: false };
   let value = "";
+  const restore = createImageRestore((image) => {
+    canvas.getContext("2d").drawImage(image, 0, 0);
+  });
 
   function point(e) {
     const r = canvas.getBoundingClientRect();
@@ -50,16 +55,14 @@ window.SignaturePad = function SignaturePad(canvas, onChange) {
     clear() {
       value = "";
       canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+      restore("");
       onChange?.("");
     },
     setValue(next) {
       value = next || "";
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (!value) return;
-      const img = new Image();
-      img.onload = () => ctx.drawImage(img, 0, 0);
-      img.src = value;
+      restore(value);
     },
     getValue: () => value,
   };

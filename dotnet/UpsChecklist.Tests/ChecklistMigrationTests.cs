@@ -270,10 +270,7 @@ public class ChecklistMigrationTests : IClassFixture<ChecklistWebApplicationFact
     {
         var client = _factory.CreateClient();
         var data = SampleData(ChecklistPositions.All[0], "2026-09-07");
-        using var content = new FormUrlEncodedContent(new Dictionary<string, string>
-        {
-            ["checklist"] = JsonSerializer.Serialize(data),
-        });
+        using var content = await AntiforgeryForms.ChecklistFormAsync(client, JsonSerializer.Serialize(data));
         var response = await client.PostAsync("/api/email-handover", content);
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
         var json = await response.Content.ReadFromJsonAsync<EmailHandoverErrorResponse>();
@@ -309,10 +306,7 @@ public class ChecklistMigrationTests : IClassFixture<ChecklistWebApplicationFact
     private async Task<HttpResponseMessage> PostDownloadAsync(ChecklistSubmission data)
     {
         var client = _factory.CreateClient();
-        using var content = new FormUrlEncodedContent(new Dictionary<string, string>
-        {
-            ["checklist"] = JsonSerializer.Serialize(data),
-        });
+        using var content = await AntiforgeryForms.ChecklistFormAsync(client, JsonSerializer.Serialize(data));
         return await client.PostAsync("/api/download", content);
     }
 

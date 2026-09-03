@@ -1,10 +1,11 @@
 using System.Text;
+using UpsChecklist.Core.Reporting;
 using UpsChecklist.Core.Scanners;
 
 namespace UpsChecklist.Core.Pdf;
 
 /// <summary>Landscape A4 scanner form matching the Excel columns, fills and instruction line.</summary>
-public sealed class ScannerPdfCreator(string? fontPath = null)
+public sealed class ScannerPdfCreator(string? fontPath = null) : IScannerPdfCreator
 {
     // Excel Office theme fills, lightened with the workbook tint.
     private static readonly PdfColor HeaderBg = Tint(15, 158, 213, 0.80);

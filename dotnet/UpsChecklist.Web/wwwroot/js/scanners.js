@@ -1,4 +1,12 @@
 import { versionForDate, localDate, createDraftStore, assignedCount, sheetLabel } from './scanner-state.mjs';
+import {
+  SCANNER_DRAFT_KEY,
+  clearSessionKey,
+  parseScannerStore,
+  readSessionJson,
+  serializeScannerStore,
+  writeSessionCandidates,
+} from './session-draft.mjs';
 
 const catalog = JSON.parse(document.getElementById('scanner-source').textContent);
 const byId = id => document.getElementById(id);
@@ -9,6 +17,27 @@ const status = byId('scanner-status');
 const rows = byId('scanner-rows');
 const drafts = createDraftStore();
 let version, sheet, entries, busy = false;
+let suppressStatusClear = false;
+let restoreNotice = '';
+
+function persistScannerDraftNow() {
+  if (!drafts.hasEntries()) {
+    clearSessionKey(sessionStorage, SCANNER_DRAFT_KEY);
+    return;
+  }
+  writeSessionCandidates(sessionStorage, SCANNER_DRAFT_KEY, [serializeScannerStore(drafts.exportMap(), {
+    date: date.value || '',
+    sheetId: picker.value || sheet?.id || '',
+  })]);
+}
+
+function restoreScannerDraft() {
+  const parsed = parseScannerStore(readSessionJson(sessionStorage, SCANNER_DRAFT_KEY));
+  if (!parsed?.drafts?.size) return null;
+  drafts.replaceAll(parsed.drafts);
+  if (!drafts.hasEntries()) return null;
+  return parsed;
+}
 
 function element(tag, text, className) {
   const node = document.createElement(tag);
@@ -29,6 +58,8 @@ function bindInput(input, row, key) {
     entries[row.id][key] = input.value;
     status.textContent = '';
     updateProgress();
+    // Scanners payloads are small; write immediately so mobile refresh cannot miss a debounce.
+    persistScannerDraftNow();
   });
 }
 
@@ -68,7 +99,7 @@ function showSheet() {
   rows.replaceChildren();
   byId('scanner-list-panel').hidden = !sheet;
   download.disabled = busy || !sheet;
-  status.textContent = '';
+  if (!suppressStatusClear) status.textContent = '';
   const day = byId('scanner-day-label');
   if (!sheet) {
     byId('scanner-list-title').textContent = '';
@@ -120,6 +151,7 @@ function showSheet() {
   table.append(body);
   rows.append(table);
   updateProgress();
+  persistScannerDraftNow();
 }
 
 function chooseDate() {
@@ -143,14 +175,35 @@ function chooseDate() {
   showSheet();
 }
 
-date.value = localDate();
-date.addEventListener('change', chooseDate);
-picker.addEventListener('change', showSheet);
+const restored = restoreScannerDraft();
+if (restored?.date) date.value = restored.date;
+else date.value = localDate();
+
+date.addEventListener('change', () => {
+  chooseDate();
+  persistScannerDraftNow();
+});
+picker.addEventListener('change', () => {
+  showSheet();
+  persistScannerDraftNow();
+});
+
+suppressStatusClear = !!restored;
 chooseDate();
+if (restored?.sheetId && version?.sheets.some(s => s.id === restored.sheetId)) {
+  picker.value = restored.sheetId;
+  showSheet();
+}
+suppressStatusClear = false;
+if (restored) {
+  restoreNotice = 'Restored draft from this browser tab.';
+  status.textContent = restoreNotice;
+}
 
 byId('scanner-form').addEventListener('submit', async event => {
   event.preventDefault();
   if (!sheet || busy) return;
+  persistScannerDraftNow();
   busy = true;
   download.disabled = true;
   date.disabled = picker.disabled = true;
@@ -192,8 +245,17 @@ byId('scanner-form').addEventListener('submit', async event => {
   }
 });
 
+function flushDraftOnLeave() {
+  persistScannerDraftNow();
+}
+
 window.addEventListener('beforeunload', event => {
+  flushDraftOnLeave();
   if (!drafts.hasEntries()) return;
   event.preventDefault();
   event.returnValue = '';
+});
+window.addEventListener('pagehide', flushDraftOnLeave);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') flushDraftOnLeave();
 });

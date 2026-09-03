@@ -4,7 +4,7 @@ For Cursor setup, local commands, and Git handoff, start with [CURSOR_SETUP.md](
 
 ## ASP.NET Core migration (.NET 10)
 
-The **`dotnet-migration`** branch adds a C# / ASP.NET Core Razor Pages replacement under [`dotnet/`](dotnet/). The original Node.js application at the repository root is **unchanged** and remains available for comparison until you verify the new app.
+The **`dotnet-migration`** branch adds a C# / ASP.NET Core Razor Pages replacement under [`dotnet/`](dotnet/). Architecture: [`dotnet/ARCHITECTURE.md`](dotnet/ARCHITECTURE.md). The original Node.js application at the repository root is **unchanged** and remains available for comparison until you verify the new app.
 
 | | Original (Node / Vinext) | New (ASP.NET Core) |
 | --- | --- | --- |

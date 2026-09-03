@@ -69,7 +69,7 @@
                 <canvas id="signature-canvas" width="700" height="180" aria-label="Draw your signature"></canvas>
                 <button type="button" class="btn secondary" id="clear-signature">Clear</button>
             </div>
-            <p class="field-hint">PDFs and photos use external hosting. No report archive. Refresh clears entries.</p>
+            <p class="field-hint">This browser tab keeps a temporary draft after refresh. Closing the tab clears it. PDFs and photos use external hosting when you generate a report. No server archive.</p>
         </section>
     </div>
     <div class="status-area" role="status" aria-live="polite" id="status-area"></div>
@@ -92,13 +92,13 @@
         <p id="whatsapp-error" class="photo-error hidden" role="alert"></p>
         <button type="button" class="btn whatsapp-button hidden" id="whatsapp-share">Share to +31 626149058</button>
         <p class="handover-hint hidden" id="whatsapp-hint-desktop">On a computer, use Send report instead. WhatsApp file sharing works on a phone.</p>
-        <p class="handover-hint hidden" id="whatsapp-hint-share">Choose WhatsApp, pick +31 626149058, and confirm sending. Nothing is saved on your device.</p>
+        <p class="handover-hint hidden" id="whatsapp-hint-share">Choose WhatsApp, pick +31 626149058, and confirm sending. Closing this tab clears the temporary draft.</p>
         <p class="handover-hint hidden" id="whatsapp-message" role="status"></p>
         <button type="button" class="btn secondary" id="whatsapp-close">Close</button>
     </dialog>
     <dialog id="email-dialog" class="handover-dialog">
         <h2>Send report to company</h2>
-        <p class="handover-intro" id="email-intro">The PDF goes to the company inbox. Nothing is saved on your device.</p>
+        <p class="handover-intro" id="email-intro">Checking email availability…</p>
         <p id="email-status" role="status"></p>
         <p id="email-error" class="photo-error hidden" role="alert"></p>
         <p id="email-message" class="handover-hint hidden" role="status"></p>
@@ -106,10 +106,13 @@
     </dialog>
 </main>
 
-<script id="positions-data" type="application/json">@Html.Raw(Model.PositionsJson)</script>
+    <script id="positions-data" type="application/json">@Html.Raw(Model.PositionsJson)</script>
+    <form id="antiforgery-holder" class="hidden" hidden>
+        @Html.AntiForgeryToken()
+    </form>
 @section Scripts {
     <script src="~/js/evidence-photo.js" asp-append-version="true"></script>
-    <script src="~/js/signature-pad.js" asp-append-version="true"></script>
+    <script type="module" src="~/js/signature-pad.js" asp-append-version="true"></script>
     <script src="~/js/whatsapp-handover.js" asp-append-version="true"></script>
     <script src="~/js/email-handover.js" asp-append-version="true"></script>
     <script type="module" src="~/js/checklist.js" asp-append-version="true"></script>

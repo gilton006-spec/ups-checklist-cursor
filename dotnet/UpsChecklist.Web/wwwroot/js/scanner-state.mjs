@@ -11,8 +11,8 @@ export function localDate(now = new Date()) {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
-export function createDraftStore() {
-  const drafts = new Map();
+export function createDraftStore(initial) {
+  const drafts = initial instanceof Map ? initial : new Map();
   const key = (date, versionId, sheetId) => `${date}|${versionId}|${sheetId}`;
   return {
     get(date, versionId, sheetId) {
@@ -22,7 +22,15 @@ export function createDraftStore() {
     },
     hasEntries() {
       return [...drafts.values()].some(entries => Object.values(entries)
-        .some(entry => Object.values(entry).some(value => value.trim().length > 0)));
+        .some(entry => Object.values(entry).some(value => String(value || '').trim().length > 0)));
+    },
+    exportMap() {
+      return drafts;
+    },
+    replaceAll(next) {
+      drafts.clear();
+      if (!(next instanceof Map)) return;
+      for (const [id, entries] of next.entries()) drafts.set(id, entries);
     },
   };
 }

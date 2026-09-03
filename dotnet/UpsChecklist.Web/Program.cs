@@ -1,9 +1,14 @@
-using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using UpsChecklist.Core;
 using UpsChecklist.Core.Pdf;
+using UpsChecklist.Core.Reporting;
 using UpsChecklist.Core.Scanners;
+using UpsChecklist.Web.Http;
+using UpsChecklist.Web.Infrastructure;
+using UpsChecklist.Web.Services;
 using UpsChecklist.Web;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +21,13 @@ var emailOptions = builder.Configuration
     .Get<HandoverEmailOptions>() ?? new HandoverEmailOptions();
 var runtimeInfo = HandoverRuntimeInfo.ForOptions(emailOptions);
 
+builder.Services.Configure<SiteAccessOptions>(builder.Configuration.GetSection(SiteAccessOptions.SectionName));
+builder.Services.PostConfigure<SiteAccessOptions>(options =>
+{
+    options.Password = (options.Password ?? "").Trim().ToLowerInvariant();
+});
+builder.Services.Configure<HandoverEmailOptions>(builder.Configuration.GetSection(HandoverEmailOptions.SectionName));
+
 if (builder.Environment.IsDevelopment() && !emailOptions.IsConfigured)
 {
     var temp = await EtherealEmailProvisioner.ProvisionAsync();
@@ -26,40 +38,88 @@ if (builder.Environment.IsDevelopment() && !emailOptions.IsConfigured)
         DevInboxUrl = temp.InboxUrl,
         UsesTempInbox = true,
     };
-    Console.WriteLine("Development test inbox ready.");
-    Console.WriteLine($"Send report delivers to: {temp.InboxAddress}");
-    Console.WriteLine($"View at: {temp.InboxUrl}");
-    Console.WriteLine($"Login: {temp.Username} / {temp.Password}");
+    Console.WriteLine("Development test inbox ready at Ethereal. Credentials are not printed.");
 }
 
-builder.Services.AddRazorPages();
-builder.Services.AddSingleton<ChecklistPdfCreator>();
-builder.Services.AddSingleton<ScannerPdfCreator>();
+builder.Services
+    .AddAuthentication(SiteAccessOptions.CookieScheme)
+    .AddCookie(SiteAccessOptions.CookieScheme, options =>
+    {
+        options.LoginPath = "/Login";
+        options.AccessDeniedPath = "/Login";
+        options.Cookie.Name = SiteAccessOptions.CookieName;
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.ExpireTimeSpan = TimeSpan.FromHours(12);
+        options.SlidingExpiration = true;
+    });
+builder.Services.AddAuthorization();
+builder.Services.AddAntiforgery();
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AllowAnonymousToPage("/Login");
+    options.Conventions.AllowAnonymousToPage("/Error");
+});
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("reports", httpContext =>
+    {
+        var environment = httpContext.RequestServices.GetRequiredService<IHostEnvironment>();
+        if (environment.IsEnvironment("Testing"))
+            return RateLimitPartition.GetNoLimiter("test");
+
+        var key = httpContext.Connection.RemoteIpAddress?.ToString() ?? "anon";
+        return RateLimitPartition.GetFixedWindowLimiter(key, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 30,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+        });
+    });
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.ContentType = "text/plain; charset=utf-8";
+        await context.HttpContext.Response.WriteAsync(
+            "Too many report requests from this instance. Wait a minute and try again.", token);
+    };
+});
+
+builder.Services.AddSingleton<IChecklistPdfCreator, ChecklistPdfCreator>();
+builder.Services.AddSingleton<IScannerPdfCreator, ScannerPdfCreator>();
 var scannerOptions = builder.Configuration.GetSection("ScannerLists").Get<ScannerListOptions>() ?? new ScannerListOptions();
 if (scannerOptions.ReturnInstruction is null || scannerOptions.ReturnInstruction.Length > 300
     || scannerOptions.ReturnInstruction.Any(char.IsControl))
     throw new InvalidOperationException("ScannerLists:ReturnInstruction must be a single line of at most 300 characters.");
 builder.Services.AddSingleton(scannerOptions);
-builder.Services.AddSingleton<HandoverEmailSender>();
 builder.Services.AddSingleton(emailOptions);
 builder.Services.AddSingleton(runtimeInfo);
 builder.Services.AddSingleton<IOptions<HandoverEmailOptions>>(_ => Options.Create(emailOptions));
+builder.Services.AddSingleton<IHandoverEmailSender, MailKitHandoverEmailSender>();
+builder.Services.AddSingleton<ReportSubmissionGuard>();
+builder.Services.AddSingleton<ChecklistReportService>();
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
 {
     options.ValueLengthLimit = ChecklistValidator.MaxBodyBytes;
     options.MultipartBodyLengthLimit = ChecklistValidator.MaxBodyBytes;
 });
 
-builder.Services.Configure<ForwardedHeadersOptions>(options =>
+if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("FLY_APP_NAME")))
 {
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownIPNetworks.Clear();
-    options.KnownProxies.Clear();
-});
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+    });
+}
 
 var app = builder.Build();
 
-app.UseForwardedHeaders();
+if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("FLY_APP_NAME")))
+    app.UseForwardedHeaders();
 
 if (!app.Environment.IsDevelopment())
 {
@@ -73,134 +133,14 @@ if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ASPNETCORE_HTTPS_P
 
 app.UseStaticFiles();
 app.UseRouting();
+app.UseRateLimiter();
+app.UseAuthentication();
+app.UseMiddleware<SiteAccessMiddleware>();
+app.UseAuthorization();
 app.MapRazorPages();
+app.MapChecklistEndpoints();
 app.MapScannerEndpoints();
 
-app.MapGet("/api/handover-config", (HandoverEmailOptions options, HandoverRuntimeInfo runtime) =>
-    Results.Json(new
-    {
-        emailAddress = runtime.DisplayAddress,
-        emailConfigured = options.IsConfigured,
-        whatsappNumber = WhatsAppConstants.HandoverNumber,
-        usesTempInbox = runtime.UsesTempInbox,
-        devInboxUrl = runtime.DevInboxUrl,
-    }));
-
-app.MapPost("/api/download", async (HttpContext context, ChecklistPdfCreator creator) =>
-    await CreatePdfResponseAsync(context, creator));
-
-app.MapPost("/api/email-handover", async (
-    HttpContext context,
-    ChecklistPdfCreator creator,
-    HandoverEmailSender sender,
-    HandoverEmailOptions options,
-    HandoverRuntimeInfo runtime) =>
-{
-    try
-    {
-        var (payload, rejectedStatus, rejectedMessage) = await ReadChecklistPayloadAsync(context);
-        if (rejectedStatus is not null)
-            return Results.Content(rejectedMessage!, "text/plain; charset=utf-8", statusCode: rejectedStatus.Value);
-
-        var data = ChecklistValidator.ParseAndValidate(payload!);
-        var bytes = creator.Create(data);
-        var filename = WhatsAppConstants.ReportFilename(data.PositionId, data.Date);
-
-        context.Response.Headers.CacheControl = "no-store";
-        context.Response.Headers["X-Content-Type-Options"] = "nosniff";
-
-        if (!options.IsConfigured)
-        {
-            return Results.Json(new
-            {
-                message = "Company email is not configured on this server.",
-            }, statusCode: StatusCodes.Status503ServiceUnavailable);
-        }
-
-        await sender.SendAsync(bytes, filename, options, context.RequestAborted);
-        return Results.Json(new
-        {
-            address = runtime.DisplayAddress,
-            message = runtime.UsesTempInbox
-                ? $"Report sent to {runtime.DisplayAddress}. Log in at Ethereal to view it."
-                : "Report sent to the company inbox. Delivery is not confirmed.",
-            devInboxUrl = runtime.DevInboxUrl,
-            usesTempInbox = runtime.UsesTempInbox,
-        });
-    }
-    catch (ChecklistValidationException ex)
-    {
-        return Results.Content(ex.Message, "text/plain; charset=utf-8", statusCode: 400);
-    }
-    catch
-    {
-        return Results.Content(
-            "The email could not be sent. Your checklist is still open. Try again.",
-            "text/plain; charset=utf-8",
-            statusCode: 400);
-    }
-});
-
 app.Run();
-
-static async Task<IResult> CreatePdfResponseAsync(HttpContext context, ChecklistPdfCreator creator)
-{
-    try
-    {
-        var (payload, rejectedStatus, rejectedMessage) = await ReadChecklistPayloadAsync(context);
-        if (rejectedStatus is not null)
-            return Results.Content(rejectedMessage!, "text/plain; charset=utf-8", statusCode: rejectedStatus.Value);
-
-        var data = ChecklistValidator.ParseAndValidate(payload!);
-        var bytes = creator.Create(data);
-        var filename = WhatsAppConstants.ReportFilename(data.PositionId, data.Date);
-        context.Response.Headers.CacheControl = "no-store";
-        context.Response.Headers["X-Content-Type-Options"] = "nosniff";
-        return Results.File(bytes, "application/pdf", filename);
-    }
-    catch (ChecklistValidationException ex)
-    {
-        return Results.Content(ex.Message, "text/plain; charset=utf-8", statusCode: 400);
-    }
-    catch (Exception ex) when (ex.Message.Contains("WinAnsi", StringComparison.OrdinalIgnoreCase))
-    {
-        return Results.Content(
-            "Please go back and use standard Latin letters in the text fields, or draw your signature.",
-            "text/plain; charset=utf-8",
-            statusCode: 400);
-    }
-    catch
-    {
-        return Results.Content(
-            "The PDF could not be created. Your checklist is still open in the original tab. Please return to it and try again.",
-            "text/plain; charset=utf-8",
-            statusCode: 400);
-    }
-}
-
-static async Task<(string? Payload, int? RejectedStatusCode, string? RejectedMessage)> ReadChecklistPayloadAsync(HttpContext context)
-{
-    if (context.Request.ContentLength is > ChecklistValidator.MaxBodyBytes)
-        return (null, 413, "The report is too large. Choose a smaller photo and try again.");
-
-    if (context.Request.HasFormContentType)
-    {
-        var form = await context.Request.ReadFormAsync();
-        var payload = form["checklist"].ToString();
-        return string.IsNullOrWhiteSpace(payload)
-            ? (null, 400, "The checklist is missing.")
-            : (payload, null, null);
-    }
-
-    using var reader = new StreamReader(context.Request.Body, Encoding.UTF8, leaveOpen: true);
-    var body = await reader.ReadToEndAsync();
-    if (body.Length > ChecklistValidator.MaxBodyBytes)
-        return (null, 413, "The report is too large. Choose a smaller photo and try again.");
-
-    var checklistRaw = ChecklistPayloadReader.ExtractFromBody(body, context.Request.ContentType);
-    return string.IsNullOrWhiteSpace(checklistRaw)
-        ? (null, 400, "The checklist is missing.")
-        : (checklistRaw, null, null);
-}
 
 public partial class Program;

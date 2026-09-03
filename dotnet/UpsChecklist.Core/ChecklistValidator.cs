@@ -20,18 +20,37 @@ public static partial class ChecklistValidator
 
     public static ChecklistSubmission ParseAndValidate(string rawJson)
     {
-        if (string.IsNullOrEmpty(rawJson) || rawJson.Length > MaxPayloadChars)
+        if (string.IsNullOrEmpty(rawJson))
+            throw new ChecklistValidationException("The checklist is missing.");
+        if (rawJson.Length > MaxPayloadChars)
             throw new ChecklistValidationException("The report is too large. Choose a smaller photo and try again.");
 
-        ChecklistSubmission data;
+        ChecklistSubmission? data;
         try
         {
-            data = JsonSerializer.Deserialize<ChecklistSubmission>(rawJson, JsonOptions)
-                ?? throw new ChecklistValidationException("The checklist is missing.");
+            data = JsonSerializer.Deserialize<ChecklistSubmission>(rawJson, JsonOptions);
         }
         catch (JsonException)
         {
+            throw new ChecklistValidationException("The checklist is not valid JSON.");
+        }
+
+        if (data is null)
             throw new ChecklistValidationException("The checklist is missing.");
+
+        if (data.PositionId is null
+            || data.Date is null
+            || data.Name is null
+            || data.Count is null
+            || data.Remarks is null
+            || data.Signature is null
+            || data.Drawn is null
+            || data.BeforeSortEvidencePhoto is null
+            || data.EvidencePhoto is null
+            || data.Checks is null
+            || data.SectionRemarks is null)
+        {
+            throw new ChecklistValidationException("The checklist contains an empty required field.");
         }
 
         Validate(data);

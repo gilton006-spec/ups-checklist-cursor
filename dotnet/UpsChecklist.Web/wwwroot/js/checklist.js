@@ -1,7 +1,18 @@
 import { createEvidenceBinding } from "./evidence-binding.mjs";
+import {
+  CHECKLIST_DRAFT_KEY,
+  checklistSaveCandidates,
+  checklistStateHasContent,
+  clearSessionKey,
+  parseChecklistSnapshot,
+  readSessionJson,
+  writeSessionCandidates,
+} from "./session-draft.mjs";
+import { antiforgeryHeaders } from "./report-request.mjs";
 
 (() => {
   const positions = JSON.parse(document.getElementById("positions-data").textContent);
+  const knownPositionIds = new Set(positions.map((p) => p.id));
   const state = {
     positionId: "",
     pickerOpen: true,
@@ -12,7 +23,10 @@ import { createEvidenceBinding } from "./evidence-binding.mjs";
     reportSent: "",
     photoBusy: 0,
     signatureMode: "type",
+    reportBusy: false,
   };
+  let persistTimer = 0;
+  let restoreNotice = "";
 
   const els = {
     picker: document.getElementById("position-picker"),
@@ -58,7 +72,7 @@ import { createEvidenceBinding } from "./evidence-binding.mjs";
 
   let signaturePad = null;
   let prepared = null;
-  let handoverConfig = { emailAddress: "gilton93@hotmail.com", usesTempInbox: false, devInboxUrl: null };
+  let handoverConfig = { emailAddress: "gilton93@hotmail.com", emailConfigured: false, usesTempInbox: false, devInboxUrl: null };
 
   async function loadHandoverConfig() {
     try {
@@ -68,8 +82,11 @@ import { createEvidenceBinding } from "./evidence-binding.mjs";
       window.EmailHandover.handoverAddress = handoverConfig.emailAddress;
       const intro = document.getElementById("email-intro");
       if (intro) {
-        intro.textContent = `The PDF goes to ${handoverConfig.emailAddress}. Nothing is saved on your device.`;
+        intro.textContent = handoverConfig.emailConfigured
+          ? `The PDF goes to ${handoverConfig.emailAddress}. This tab keeps a temporary draft until you close it.`
+          : `Email send is not set up on this server yet. Download the PDF or use WhatsApp. Destination will be ${handoverConfig.emailAddress} once SMTP is configured.`;
       }
+      updateActions();
     } catch {
       /* keep defaults */
     }
@@ -123,9 +140,42 @@ import { createEvidenceBinding } from "./evidence-binding.mjs";
     });
   }
 
+  function persistDraftNow() {
+    const candidates = checklistSaveCandidates(state);
+    if (!candidates.length) {
+      clearSessionKey(sessionStorage, CHECKLIST_DRAFT_KEY);
+      return;
+    }
+    writeSessionCandidates(sessionStorage, CHECKLIST_DRAFT_KEY, candidates);
+  }
+
+  function schedulePersist() {
+    clearTimeout(persistTimer);
+    persistTimer = setTimeout(persistDraftNow, 400);
+  }
+
+  function restoreDraftFromSession() {
+    const parsed = parseChecklistSnapshot(readSessionJson(sessionStorage, CHECKLIST_DRAFT_KEY), knownPositionIds);
+    if (!parsed || !checklistStateHasContent(parsed)) return;
+    state.name = parsed.name;
+    if (parsed.date) state.date = parsed.date;
+    state.drafts = parsed.drafts;
+    state.signatureMode = parsed.signatureMode;
+    state.positionId = parsed.positionId;
+    state.pickerOpen = parsed.positionId ? parsed.pickerOpen : true;
+    els.name.value = state.name;
+    els.useName.disabled = !state.name.trim();
+    const parts = [];
+    parts.push("Restored draft from this browser tab.");
+    if (parsed.photosOmitted) parts.push("Re-add evidence photos.");
+    if (parsed.drawnOmitted) parts.push("Re-draw the signature if needed.");
+    restoreNotice = parts.join(" ");
+  }
+
   function changed() {
     state.downloadStarted = false;
     updateActions();
+    schedulePersist();
   }
 
   function renderPicker() {
@@ -242,9 +292,12 @@ import { createEvidenceBinding } from "./evidence-binding.mjs";
   }
 
   function updateActions() {
-    const disabled = state.photoBusy > 0;
+    const disabled = state.photoBusy > 0 || state.reportBusy;
     els.whatsappOpen.disabled = disabled;
-    els.emailOpen.disabled = disabled;
+    els.emailOpen.disabled = disabled || !handoverConfig.emailConfigured;
+    els.emailOpen.title = handoverConfig.emailConfigured
+      ? ""
+      : "Email is not configured on this server yet.";
     els.statusArea.innerHTML = state.reportSent ? `<p class="success">${escapeHtml(state.reportSent)}</p>` : "";
   }
 
@@ -282,11 +335,14 @@ import { createEvidenceBinding } from "./evidence-binding.mjs";
     els.whatsappHintDesktop.classList.add("hidden");
     els.whatsappStatus.textContent = "Preparing your report…";
     els.dialog.showModal();
+    state.reportBusy = true;
+    updateActions();
     try {
       const file = await window.WhatsAppHandover.prepareReport(
         payload(),
         window.WhatsAppHandover.reportFilename(state.positionId, state.date),
-        new AbortController().signal);
+        new AbortController().signal,
+        antiforgeryHeaders());
       prepared = { file, canShare: window.WhatsAppHandover.supportsFileShare(file) };
       els.whatsappStatus.textContent = "";
       if (prepared.canShare) {
@@ -295,33 +351,51 @@ import { createEvidenceBinding } from "./evidence-binding.mjs";
       } else {
         els.whatsappHintDesktop.classList.remove("hidden");
       }
-    } catch {
+    } catch (error) {
       els.whatsappStatus.textContent = "";
-      els.whatsappError.textContent = "Could not prepare the report. Your entries are still here.";
+      els.whatsappError.textContent = error instanceof Error
+        ? error.message
+        : "Could not prepare the report. Your entries are still here.";
       els.whatsappError.classList.remove("hidden");
+    } finally {
+      state.reportBusy = false;
+      updateActions();
     }
   }
 
   async function sendEmailReport() {
+    if (!handoverConfig.emailConfigured) {
+      els.emailError.classList.remove("hidden");
+      els.emailMessage.classList.add("hidden");
+      els.emailStatus.textContent = "";
+      els.emailError.textContent = "Company email is not configured on this server. Download the PDF or use WhatsApp instead.";
+      els.emailDialog.showModal();
+      return;
+    }
     els.emailError.classList.add("hidden");
     els.emailMessage.classList.add("hidden");
     els.emailStatus.textContent = `Sending report to ${handoverConfig.emailAddress}…`;
     els.emailDialog.showModal();
+    state.reportBusy = true;
+    updateActions();
     try {
       const filename = window.WhatsAppHandover.reportFilename(state.positionId, state.date);
-      const result = await window.EmailHandover.sendReport(payload(), filename, new AbortController().signal);
+      const result = await window.EmailHandover.sendReport(payload(), filename, new AbortController().signal, antiforgeryHeaders());
       els.emailStatus.textContent = "";
       els.emailMessage.classList.remove("hidden");
       els.emailMessage.innerHTML = escapeHtml(result.message);
       if (result.devInboxUrl && result.usesTempInbox) {
-        els.emailMessage.innerHTML += `<br><a href="${escapeAttr(result.devInboxUrl)}" target="_blank" rel="noopener noreferrer">Open inbox at Ethereal</a>`;
+        els.emailMessage.innerHTML += `<br><a href="${escapeAttr(result.devInboxUrl)}" target="_blank" rel="noopener noreferrer">Open test inbox at Ethereal</a>`;
       }
       state.reportSent = result.message;
       updateActions();
     } catch (error) {
       els.emailStatus.textContent = "";
-      els.emailError.innerHTML = escapeHtml(error instanceof Error ? error.message : "The report could not be sent.").replaceAll("\n", "<br>");
+      els.emailError.innerHTML = escapeHtml(error instanceof Error ? error.message : "The report could not be handed to the mail server.").replaceAll("\n", "<br>");
       els.emailError.classList.remove("hidden");
+    } finally {
+      state.reportBusy = false;
+      updateActions();
     }
   }
 
@@ -346,7 +420,7 @@ import { createEvidenceBinding } from "./evidence-binding.mjs";
   els.useName.addEventListener("click", () => { draft().signature = state.name; els.signature.value = draft().signature; changed(); });
   document.querySelectorAll("[data-signature-mode]").forEach((btn) => btn.addEventListener("click", () => { state.signatureMode = btn.dataset.signatureMode; updateSignatureMode(); changed(); }));
   document.getElementById("count-dec").addEventListener("click", () => { draft().count = String(Math.max(0, Number(draft().count || 0) - 1)); els.packages.value = draft().count; changed(); });
-  document.getElementById("count-inc").addEventListener("click", () => { draft().count = String(Number(draft().count || 0) + 1); els.packages.value = draft().count; changed(); });
+  document.getElementById("count-inc").addEventListener("click", () => { draft().count = String(Math.min(99999, Number(draft().count || 0) + 1)); els.packages.value = draft().count; changed(); });
   document.getElementById("count-none").addEventListener("click", () => { draft().count = "0"; els.packages.value = "0"; changed(); });
   els.whatsappOpen.addEventListener("click", openWhatsAppDialog);
   els.emailOpen.addEventListener("click", sendEmailReport);
@@ -357,7 +431,7 @@ import { createEvidenceBinding } from "./evidence-binding.mjs";
     els.whatsappMessage.textContent = result === "cancelled"
       ? "Sharing cancelled. Nothing was confirmed sent."
       : result === "returned"
-        ? `Check WhatsApp, confirm ${window.WhatsAppHandover.handoverNumber}, then send.`
+        ? `WhatsApp share sheet closed. Confirm ${window.WhatsAppHandover.handoverNumber} in WhatsApp if you still need to send. Opening the sheet does not confirm delivery.`
         : "Could not share. Use Send report instead.";
   });
   els.whatsappClose.addEventListener("click", () => els.dialog.close());
@@ -365,14 +439,22 @@ import { createEvidenceBinding } from "./evidence-binding.mjs";
 
   const today = new Date();
   state.date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  restoreDraftFromSession();
   els.date.value = state.date;
   window.addEventListener("beforeunload", (event) => {
-    const hasEntries = state.name.trim() || Object.values(state.drafts).some((d) =>
-      Object.values(d.checks).some(Boolean) || d.count || d.remarks || d.beforeSortEvidencePhoto || d.evidencePhoto || d.signature || d.drawn || Object.values(d.sectionRemarks).some(Boolean));
+    persistDraftNow();
+    const hasEntries = checklistStateHasContent(state);
     if (!hasEntries) return;
     event.preventDefault();
     event.returnValue = "";
   });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") persistDraftNow();
+  });
   loadHandoverConfig();
   renderShell();
+  if (restoreNotice) {
+    els.statusArea.textContent = restoreNotice;
+    restoreNotice = "";
+  }
 })();

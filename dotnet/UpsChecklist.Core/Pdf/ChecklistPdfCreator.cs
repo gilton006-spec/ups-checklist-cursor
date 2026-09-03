@@ -1,9 +1,10 @@
 using System.Text;
 using UpsChecklist.Core.Models;
+using UpsChecklist.Core.Reporting;
 
 namespace UpsChecklist.Core.Pdf;
 
-public sealed class ChecklistPdfCreator
+public sealed class ChecklistPdfCreator : IChecklistPdfCreator
 {
     private const double W = 595.28;
     private const double H = 841.89;

@@ -61,10 +61,16 @@ window.WhatsAppHandover = {
     this.openHandoverChat();
     return "download-and-chat";
   },
-  async prepareReport(payload, filename, signal) {
+  async prepareReport(payload, filename, signal, headers = {}) {
     const form = new FormData();
     form.set("checklist", payload);
-    const response = await fetch("/api/download", { method: "POST", body: form, signal, cache: "no-store" });
+    const response = await fetch("/api/download", {
+      method: "POST",
+      body: form,
+      signal,
+      cache: "no-store",
+      headers,
+    });
     if (!response.ok || !response.headers.get("content-type")?.startsWith("application/pdf")) {
       throw new Error("The PDF could not be prepared. Your entries are still here. Try again.");
     }

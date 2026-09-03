@@ -1,9 +1,9 @@
 window.EmailHandover = {
   handoverAddress: "gilton93@hotmail.com",
-  async sendReport(payload, filename, signal) {
+  async sendReport(payload, filename, signal, headers = {}) {
     const form = new FormData();
     form.set("checklist", payload);
-    const response = await fetch("/api/email-handover", { method: "POST", body: form, signal, cache: "no-store" });
+    const response = await fetch("/api/email-handover", { method: "POST", body: form, signal, cache: "no-store", headers });
     const contentType = response.headers.get("content-type") ?? "";
     if (!response.ok) {
       if (response.status === 503 && contentType.includes("json")) {
