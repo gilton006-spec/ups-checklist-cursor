@@ -243,13 +243,32 @@ Passing one category does not prove another.
 
 There is **no Playwright/CI browser suite** yet (ADR 6). Keyboard, zoom, and camera behaviour are unverified in automation.
 
+### Code coverage (not browser testing)
+
+**Code coverage** measures which lines/branches the automated tests executed. It does **not** open a real browser or prove the UI works on a phone.
+
+Coverlet is already referenced by `UpsChecklist.Tests`. Example (from repo root):
+
+```powershell
+dotnet test dotnet/UpsChecklist.Tests/UpsChecklist.Tests.csproj --collect:"XPlat Code Coverage" --results-directory dotnet/TestResults
+```
+
+A recent local run on this branch reported about **85% line** / **71% branch** coverage overall (Core higher than Web). Treat that as a signal of gaps, not a quality score. Do not chase 100%.
+
+Optional HTML report (install once: `dotnet tool install -g dotnet-reportgenerator-globaltool`):
+
+```powershell
+reportgenerator -reports:dotnet/TestResults/**/coverage.cobertura.xml -targetdir:dotnet/TestResults/html -reporttypes:Html
+start dotnet/TestResults/html/index.html
+```
+
 ```powershell
 dotnet test dotnet/UpsChecklist.Tests/UpsChecklist.Tests.csproj
 node --test dotnet/tools/ScannerRegressionTests/*.test.mjs
 dotnet run --project dotnet/tools/ScannerRegressionTests -- $env:TEMP\scanner-pdfs
 ```
 
-CI example (needs GitHub `workflow` scope to install under `.github/workflows/`): `dotnet/ci-dotnet.yml.example`. It runs the first two plus the scanner console on Ubuntu.
+CI: `.github/workflows/dotnet.yml` runs on pushes/PRs that touch `dotnet/`. It builds Release, runs xUnit with Coverlet, prints line/branch coverage, uploads the Cobertura artifact, runs Node helper tests, and the scanner PDF regression console. Copy of the same file: `dotnet/ci-dotnet.yml.example` (for tokens without `workflow` scope).
 
 ---
 

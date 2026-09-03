@@ -12,6 +12,11 @@
 
 # testing
 /coverage
+dotnet/TestResults/
+**/TestResults/
+**/coverage*.json
+**/coverage*.xml
+**/coverage*.info
 
 # next.js
 /.next/
