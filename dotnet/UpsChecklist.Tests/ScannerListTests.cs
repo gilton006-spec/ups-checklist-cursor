@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Hosting;
+using UpsChecklist.Core.Pdf;
 using UpsChecklist.Core.Scanners;
 
 namespace UpsChecklist.Tests;
@@ -109,6 +111,52 @@ public sealed class ScannerListTests(ChecklistWebApplicationFactory factory) : I
         Assert.Contains("User name", text);
         Assert.DoesNotContain("Everyone must leave", text);
         Assert.DoesNotContain("SUNRISE", text);
+    }
+
+    [Fact]
+    public void Long_comments_stay_inside_the_visible_field_box()
+    {
+        var sheet = ScannerLists.All.Single(v => v.Id == "monday").Sheets.Single(s => s.Id == "pd1");
+        var data = new ScannerSubmission
+        {
+            Date = "2026-09-07", VersionId = "monday", SheetId = "pd1",
+            Entries = sheet.Rows.ToDictionary(r => r.Id, _ => new ScannerEntry
+            {
+                HandoverTo = new string('W', 80), ScannerNumber = new string('W', 40), Comments = new string('W', 300),
+            }),
+        };
+        var appearances = PdfTestHelpers.FieldAppearances(new ScannerPdfCreator().Create(data));
+        Assert.NotEmpty(appearances);
+        foreach (var appearance in appearances)
+        {
+            Assert.NotEmpty(appearance.DrawnLines);
+            foreach (var (baseline, _) in appearance.DrawnLines)
+                Assert.InRange(baseline, appearance.ClipBottom, appearance.ClipTop);
+        }
+        // A comment of 300 characters must be drawn in full, not only stored in the field value.
+        Assert.Contains(appearances, appearance => appearance.TotalGlyphs >= 300);
+    }
+
+    [Fact]
+    public async Task Configured_return_instruction_shows_on_the_page_and_in_the_pdf()
+    {
+        const string instruction = "QA test wording only: hand the scanner back at the team leader desk.";
+        using var configured = factory.WithWebHostBuilder(builder =>
+            builder.UseSetting("ScannerLists:ReturnInstruction", instruction));
+        using var client = configured.CreateClient();
+        var html = await client.GetStringAsync("/Scanners");
+        var token = Regex.Match(html, "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"");
+        client.DefaultRequestHeaders.Add("RequestVerificationToken", WebUtility.HtmlDecode(token.Groups[1].Value));
+        Assert.Contains(instruction, html);
+
+        var response = await client.PostAsJsonAsync("/api/scanners/download", new ScannerSubmission
+            { Date = "2026-09-07", VersionId = "monday", SheetId = "pd1" });
+        response.EnsureSuccessStatusCode();
+        var bytes = await response.Content.ReadAsByteArrayAsync();
+        var pages = PdfTestHelpers.PageCount(bytes);
+        var text = PdfTestHelpers.AllText(bytes);
+        Assert.Contains(instruction, text);
+        Assert.Equal(pages, Regex.Matches(text, Regex.Escape(instruction)).Count);
     }
 
     [Theory]

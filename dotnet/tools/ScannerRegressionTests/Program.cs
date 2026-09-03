@@ -79,7 +79,19 @@ valid.Entries["r5"] = new() { HandoverTo = new string('W', 80), ScannerNumber = 
 File.WriteAllBytes(Path.Combine(output, "long-fields.pdf"), new ScannerPdfCreator().Create(valid,
     "QA instruction only: return location must be confirmed before production."));
 manifest.Add(new { file = "long-fields.pdf", data = valid, sheet = ScannerLists.All[0].Sheets.Single(s => s.Id == "pd1") });
-File.WriteAllText(Path.Combine(output, "manifest.json"), JsonSerializer.Serialize(manifest, new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true }));
+// The independent checker reads this geometry instead of repeating the layout numbers.
+var layout = new
+{
+    pageWidth = ScannerPdfLayout.PageWidth,
+    pageHeight = ScannerPdfLayout.PageHeight,
+    margin = ScannerPdfLayout.Margin,
+    contentTop = ScannerPdfLayout.ContentTop,
+    contentBottom = ScannerPdfLayout.ContentBottom,
+    footerBaseline = ScannerPdfLayout.FooterBaseline,
+    headerRowHeight = ScannerPdfLayout.HeaderRowHeight,
+};
+File.WriteAllText(Path.Combine(output, "manifest.json"), JsonSerializer.Serialize(new { layout, pdfs = manifest },
+    new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true }));
 
 // Exercise the real endpoint and real anti-forgery service without a listening server.
 var services = new ServiceCollection();
@@ -119,3 +131,4 @@ Assert(await Request(new string('x', ScannerValidator.MaxBodyBytes + 1), length:
 Assert(await Request("null") is ContentHttpResult { StatusCode: 400 }, "Invalid JSON body rejected.");
 Assert(await Request(baseJson.Replace("2026-09-07", "2026-09-12")) is ContentHttpResult { StatusCode: 400 }, "Weekend rejected by endpoint.");
 Console.WriteLine($"PASS: {checks} checks, {manifest.Count} scanner PDF fixtures. No SMTP, WhatsApp or listening web server used.");
+Console.WriteLine($"Verify appearances with: python {Path.Combine("dotnet", "tools", "ScannerRegressionTests", "verify-pdfs.py")} \"{output}\"");

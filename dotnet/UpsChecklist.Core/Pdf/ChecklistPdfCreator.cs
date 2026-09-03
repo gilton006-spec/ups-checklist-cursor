@@ -87,7 +87,9 @@ public sealed class ChecklistPdfCreator
             {
                 var chunk = lines.Skip(offset).Take(chunkSize).ToList();
                 var suffix = offset == 0 ? "" : $"_continued_{offset / chunkSize}";
-                var chunkHeight = Math.Max(58, chunk.Count * 15 + 20);
+                // Never reserve less than the field appearance needs, or the last remark line is clipped.
+                var chunkHeight = Math.Max(Math.Max(58, chunk.Count * PdfFormAppearance.LineHeight(10) + 20),
+                    PdfFormAppearance.MultilineHeight(font, 10, chunk.Count) + 6);
                 TextFieldBlock(key + suffix, label + (offset == 0 ? "" : " (continued)"), string.Join('\n', chunk), Cw, chunkHeight, true);
             }
         }

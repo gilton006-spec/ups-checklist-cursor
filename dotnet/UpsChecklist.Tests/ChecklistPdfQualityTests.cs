@@ -79,6 +79,32 @@ public class ChecklistPdfQualityTests
             Assert.True(textLength > 80, $"{positionId} page {page} is missing static text.");
     }
 
+    [Fact]
+    public void Long_remarks_are_drawn_inside_their_field_boxes()
+    {
+        var position = ChecklistPositions.Get("pd3")!;
+        var remark = string.Join(' ', Enumerable.Repeat("Followed up with the team leader about the jam at the merge.", 12));
+        var data = new ChecklistSubmission
+        {
+            PositionId = position.Id,
+            Date = "2026-09-02",
+            Name = "Quality Check",
+            Count = "2",
+            Remarks = remark,
+            SectionRemarks = new Dictionary<string, string> { ["sls1"] = remark, ["recirculation"] = remark },
+            Signature = "Quality Check",
+        };
+
+        var appearances = PdfTestHelpers.FieldAppearances(new ChecklistPdfCreator().Create(data));
+
+        Assert.NotEmpty(appearances);
+        foreach (var appearance in appearances)
+            foreach (var (baseline, _) in appearance.DrawnLines)
+                Assert.InRange(baseline, appearance.ClipBottom, appearance.ClipTop);
+        var expected = remark.Replace(" ", "").Length;
+        Assert.Contains(appearances, appearance => appearance.TotalGlyphs >= expected);
+    }
+
     [Theory]
     [InlineData("nl-NL")]
     [InlineData("de-DE")]

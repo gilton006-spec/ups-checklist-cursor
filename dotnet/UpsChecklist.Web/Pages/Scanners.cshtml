@@ -22,6 +22,10 @@
     <p class="demo-label">Demo only. Not UPS approved.</p>
     <h1>Scanner lists</h1>
     <p class="field-hint">Choose the date and list. Fill in Handover to and Scanner# like the Excel sheet.</p>
+    @if (!string.IsNullOrWhiteSpace(Model.ReturnInstruction))
+    {
+        <p class="scanner-notice" id="scanner-return">@Model.ReturnInstruction</p>
+    }
     <form id="scanner-form" autocomplete="off">
         @Html.AntiForgeryToken()
         <div class="scanner-selectors">

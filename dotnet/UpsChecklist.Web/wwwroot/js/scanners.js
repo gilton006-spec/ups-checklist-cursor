@@ -93,15 +93,20 @@ function showSheet() {
   const body = document.createElement('tbody');
   for (const row of sheet.rows) {
     const tr = document.createElement('tr');
-    tr.append(textCell(row.userName, 'scanner-name'));
-    tr.append(textCell(row.gost));
-    tr.append(textCell(row.scannerType, row.scannerType === 'Two piece' ? 'scanner-two-piece' : ''));
-    tr.append(row.position
-      ? textCell(row.position)
-      : inputCell(row, 'position', 'Position', 40));
-    tr.append(inputCell(row, 'handoverTo', 'Handover to', 80));
-    tr.append(inputCell(row, 'scannerNumber', 'Scanner#', 40));
-    tr.append(commentsCell(row));
+    const cells = [
+      textCell(row.userName, 'scanner-name'),
+      textCell(row.gost),
+      textCell(row.scannerType, row.scannerType === 'Two piece' ? 'scanner-two-piece' : ''),
+      row.position ? textCell(row.position) : inputCell(row, 'position', 'Position', 40),
+      inputCell(row, 'handoverTo', 'Handover to', 80),
+      inputCell(row, 'scannerNumber', 'Scanner#', 40),
+      commentsCell(row),
+    ];
+    // On a phone the table stacks, so each cell carries its column name.
+    cells.forEach((td, column) => {
+      td.dataset.label = sheet.headers[column];
+      tr.append(td);
+    });
     body.append(tr);
   }
   for (const instruction of sheet.instructions) {

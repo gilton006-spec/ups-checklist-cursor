@@ -110,5 +110,10 @@ window.EvidencePhoto = function EvidencePhoto(root, { onChange, onBusyChange, la
       preview.classList.add("hidden");
       error.classList.add("hidden");
     },
+    // Drop a photo that is still loading, so a replaced widget reports nothing further.
+    cancel() {
+      request += 1;
+      if (busy) setBusy(false);
+    },
   };
 };

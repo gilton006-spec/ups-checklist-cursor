@@ -1,3 +1,5 @@
+import { createEvidenceBinding } from "./evidence-binding.mjs";
+
 (() => {
   const positions = JSON.parse(document.getElementById("positions-data").textContent);
   const state = {
@@ -77,10 +79,24 @@
     return { checks: {}, count: "", remarks: "", sectionRemarks: {}, beforeSortEvidencePhoto: "", evidencePhoto: "", signature: "", drawn: "", signatureMode: "type" };
   }
 
-  function draft() {
-    if (!state.drafts[state.positionId]) state.drafts[state.positionId] = emptyDraft();
-    return state.drafts[state.positionId];
+  function draftFor(id) {
+    if (!state.drafts[id]) state.drafts[id] = emptyDraft();
+    return state.drafts[id];
   }
+
+  function draft() {
+    return draftFor(state.positionId);
+  }
+
+  const evidence = createEvidenceBinding({
+    createWidget: (root, options) => window.EvidencePhoto(root, options),
+    draftFor,
+    onValueChange: () => changed(),
+    onBusyChange(count) {
+      state.photoBusy = count;
+      updateActions();
+    },
+  });
 
   function position() {
     return positions.find((p) => p.id === state.positionId);
@@ -157,40 +173,27 @@
     els.signature.value = draft().signature;
     state.signatureMode = draft().signatureMode || "type";
     updateSignatureMode();
-    state.photoBusy = 0;
     mountEvidencePhotos();
     mountSignaturePad();
     bindSectionEvents();
     updateProgress();
   }
 
-  function mountEvidenceWidget(root, field, label, hint) {
-    if (!root) return null;
-    root.innerHTML = "";
-    const widget = window.EvidencePhoto(root, {
-      label,
-      hint,
-      onChange(value) { draft()[field] = value; changed(); },
-      onBusyChange(busy) {
-        state.photoBusy = Math.max(0, state.photoBusy + (busy ? 1 : -1));
-        updateActions();
-      },
-    });
-    widget.setValue(draft()[field]);
-    return widget;
-  }
-
   function mountEvidencePhotos() {
-    mountEvidenceWidget(
-      els.sections.querySelector("[data-before-evidence]"),
-      "beforeSortEvidencePhoto",
-      "Before-sort evidence photo",
-      "Photo of the area before the sort starts. Included in your PDF. Avoid faces and parcel addresses.");
-    mountEvidenceWidget(
-      els.evidenceRoot,
-      "evidencePhoto",
-      "After-sort evidence photo",
-      "Photo after the sort, or extra evidence. Included in your PDF. Avoid faces and parcel addresses.");
+    evidence.mount(state.positionId, [
+      {
+        root: els.sections.querySelector("[data-before-evidence]"),
+        field: "beforeSortEvidencePhoto",
+        label: "Before-sort evidence photo",
+        hint: "Photo of the area before the sort starts. Included in your PDF. Avoid faces and parcel addresses.",
+      },
+      {
+        root: els.evidenceRoot,
+        field: "evidencePhoto",
+        label: "After-sort evidence photo",
+        hint: "Photo after the sort, or extra evidence. Included in your PDF. Avoid faces and parcel addresses.",
+      },
+    ]);
   }
 
   function mountSignaturePad() {
@@ -265,7 +268,6 @@
   function selectPosition(id) {
     state.positionId = id;
     state.pickerOpen = false;
-    state.photoBusy = 0;
     changed();
     renderShell();
     els.heading.focus({ preventScroll: true });

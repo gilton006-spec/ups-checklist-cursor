@@ -103,4 +103,48 @@ internal static class PdfTestHelpers
         using var pdf = PdfDocument.Open(bytes);
         return string.Join('\n', pdf.GetPages().Select(page => page.Text));
     }
+
+    /// <summary>Text a form field actually draws, with the box it is clipped to.</summary>
+    public sealed record FieldAppearance(double ClipBottom, double ClipTop, IReadOnlyList<(double Baseline, int Glyphs)> Lines)
+    {
+        public int TotalGlyphs => Lines.Sum(line => line.Glyphs);
+        public IEnumerable<(double Baseline, int Glyphs)> DrawnLines => Lines.Where(line => line.Glyphs > 0);
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex AppearanceStream = new(
+        @"/Subtype /Form /FormType 1 /BBox \[[\d. ]+\][\s\S]*?/Length (\d+) >>\nstream\n");
+    private static readonly System.Text.RegularExpressions.Regex ClipBox = new(
+        @"([-\d.]+) ([-\d.]+) ([-\d.]+) ([-\d.]+) re W n");
+    private static readonly System.Text.RegularExpressions.Regex AppearanceLine = new(
+        @"1 0 0 1 ([-\d.]+) ([-\d.]+) Tm\s*<([0-9A-Fa-f]*)> Tj");
+
+    public static IReadOnlyList<FieldAppearance> FieldAppearances(byte[] bytes)
+    {
+        var raw = System.Text.Encoding.Latin1.GetString(bytes);
+        var appearances = new List<FieldAppearance>();
+        foreach (System.Text.RegularExpressions.Match stream in AppearanceStream.Matches(raw))
+        {
+            var content = Inflate(bytes, stream.Index + stream.Length, int.Parse(stream.Groups[1].Value));
+            var clip = ClipBox.Match(content);
+            if (!clip.Success)
+                continue; // Checkbox appearances draw no text.
+            var bottom = Double(clip.Groups[2]);
+            var lines = AppearanceLine.Matches(content)
+                .Select(line => (Baseline: Double(line.Groups[2]), Glyphs: line.Groups[3].Length / 4))
+                .ToList();
+            appearances.Add(new FieldAppearance(bottom, bottom + Double(clip.Groups[4]), lines));
+        }
+        return appearances;
+    }
+
+    private static double Double(System.Text.RegularExpressions.Group group) =>
+        double.Parse(group.Value, System.Globalization.CultureInfo.InvariantCulture);
+
+    private static string Inflate(byte[] bytes, int offset, int length)
+    {
+        using var compressed = new MemoryStream(bytes, offset, length);
+        using var zlib = new System.IO.Compression.ZLibStream(compressed, System.IO.Compression.CompressionMode.Decompress);
+        using var reader = new StreamReader(zlib, System.Text.Encoding.Latin1);
+        return reader.ReadToEnd();
+    }
 }
