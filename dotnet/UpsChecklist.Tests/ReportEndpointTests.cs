@@ -122,9 +122,52 @@ public sealed class EmailHandoverIntegrationTests
         Assert.Equal(1, factory.Sender.Calls);
     }
 
+    [Fact]
+    public async Task Uncertain_smtp_failure_keeps_duplicate_reservation()
+    {
+        await using var factory = new FailingEmailFactory();
+        var client = factory.CreateClient();
+        var json = JsonSerializer.Serialize(ChecklistMigrationSample.Pd4());
+        using var content = await AntiforgeryForms.ChecklistFormAsync(client, json);
+        var first = await client.PostAsync("/api/email-handover", content);
+        Assert.Equal(HttpStatusCode.BadGateway, first.StatusCode);
+        Assert.Equal(1, factory.Sender.Calls);
+
+        using var retry = await AntiforgeryForms.ChecklistFormAsync(client, json);
+        var second = await client.PostAsync("/api/email-handover", retry);
+        Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
+        Assert.Equal(1, factory.Sender.Calls);
+    }
+
     private sealed class FakeEmailFactory : WebApplicationFactory<Program>
     {
         public FakeSender Sender { get; } = new();
+
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        {
+            builder.UseEnvironment("Testing");
+            builder.ConfigureTestServices(services =>
+            {
+                var configured = new HandoverEmailOptions
+                {
+                    Host = "smtp.test.local",
+                    Port = 587,
+                    Username = "demo@test.local",
+                    Password = "not-a-real-secret",
+                    From = "demo@test.local",
+                    To = "demo@test.local",
+                };
+                services.AddSingleton(configured);
+                services.AddSingleton<IOptions<HandoverEmailOptions>>(_ => Options.Create(configured));
+                services.AddSingleton<HandoverRuntimeInfo>(HandoverRuntimeInfo.ForOptions(configured));
+                services.AddSingleton<IHandoverEmailSender>(Sender);
+            });
+        }
+    }
+
+    private sealed class FailingEmailFactory : WebApplicationFactory<Program>
+    {
+        public FailingSender Sender { get; } = new();
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
@@ -158,6 +201,17 @@ public sealed class EmailHandoverIntegrationTests
             Assert.True(pdfBytes.Length > 4);
             Assert.StartsWith("UPS_", filename);
             return Task.CompletedTask;
+        }
+    }
+
+    public sealed class FailingSender : IHandoverEmailSender
+    {
+        public int Calls { get; private set; }
+
+        public Task SendAsync(byte[] pdfBytes, string filename, CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            throw new InvalidOperationException("SMTP transport failed after contact.");
         }
     }
 }

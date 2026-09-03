@@ -7,9 +7,13 @@ export class ReportRequestError extends Error {
 }
 
 export async function fetchWithTimeout(url, options = {}, timeoutMs = 45000) {
+  const userSignal = options.signal;
+  if (userSignal?.aborted) {
+    throw new ReportRequestError("The request was cancelled. Your entries are still here.", { aborted: true });
+  }
+
   const timeout = new AbortController();
   const timer = setTimeout(() => timeout.abort(), timeoutMs);
-  const userSignal = options.signal;
   const onAbort = () => timeout.abort();
   userSignal?.addEventListener("abort", onAbort);
   try {
@@ -18,6 +22,7 @@ export async function fetchWithTimeout(url, options = {}, timeoutMs = 45000) {
     if (userSignal?.aborted) {
       throw new ReportRequestError("The request was cancelled. Your entries are still here.", { aborted: true });
     }
+    if (error instanceof ReportRequestError) throw error;
     throw new ReportRequestError(
       "The request timed out or could not be completed. Your entries are still here. Whether the server finished is unknown.",
       { timeout: true });

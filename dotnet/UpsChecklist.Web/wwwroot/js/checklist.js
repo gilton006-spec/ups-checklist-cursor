@@ -4,6 +4,7 @@ import {
   checklistSaveCandidates,
   checklistStateHasContent,
   clearSessionKey,
+  isDraftWithinAge,
   parseChecklistSnapshot,
   readSessionJson,
   writeSessionCandidates,
@@ -83,7 +84,7 @@ import { antiforgeryHeaders } from "./report-request.mjs";
       const intro = document.getElementById("email-intro");
       if (intro) {
         intro.textContent = handoverConfig.emailConfigured
-          ? `The PDF goes to ${handoverConfig.emailAddress}. This tab keeps a temporary draft until you close it.`
+          ? `The PDF goes to ${handoverConfig.emailAddress}. This tab keeps a temporary draft (use Clear draft when finished).`
           : `Email send is not set up on this server yet. Download the PDF or use WhatsApp. Destination will be ${handoverConfig.emailAddress} once SMTP is configured.`;
       }
       updateActions();
@@ -140,13 +141,35 @@ import { antiforgeryHeaders } from "./report-request.mjs";
     });
   }
 
+  function showDraftNotice(message) {
+    restoreNotice = message;
+    if (!state.reportSent) {
+      els.statusArea.textContent = message;
+    }
+  }
+
   function persistDraftNow() {
     const candidates = checklistSaveCandidates(state);
     if (!candidates.length) {
       clearSessionKey(sessionStorage, CHECKLIST_DRAFT_KEY);
-      return;
+      return { ok: true, omitted: false };
     }
-    writeSessionCandidates(sessionStorage, CHECKLIST_DRAFT_KEY, candidates);
+    const result = writeSessionCandidates(sessionStorage, CHECKLIST_DRAFT_KEY, candidates);
+    if (!result.ok) {
+      showDraftNotice("Could not save the draft in this browser tab. Keep this page open until you hand over the report.");
+    } else if (result.omitted || result.photosOmitted || result.drawnOmitted) {
+      const parts = ["Draft saved without some large media."];
+      if (result.photosOmitted) parts.push("Photos were omitted.");
+      if (result.drawnOmitted) parts.push("Drawn signature was omitted.");
+      showDraftNotice(parts.join(" "));
+    }
+    return result;
+  }
+
+  function clearDraftNow() {
+    clearTimeout(persistTimer);
+    clearSessionKey(sessionStorage, CHECKLIST_DRAFT_KEY);
+    showDraftNotice("Draft cleared for this browser tab.");
   }
 
   function schedulePersist() {
@@ -155,8 +178,14 @@ import { antiforgeryHeaders } from "./report-request.mjs";
   }
 
   function restoreDraftFromSession() {
-    const parsed = parseChecklistSnapshot(readSessionJson(sessionStorage, CHECKLIST_DRAFT_KEY), knownPositionIds);
+    const raw = readSessionJson(sessionStorage, CHECKLIST_DRAFT_KEY);
+    const parsed = parseChecklistSnapshot(raw, knownPositionIds);
     if (!parsed || !checklistStateHasContent(parsed)) return;
+    if (!isDraftWithinAge(parsed.savedAt)) {
+      clearSessionKey(sessionStorage, CHECKLIST_DRAFT_KEY);
+      restoreNotice = "An old draft was discarded. Start a fresh checklist.";
+      return;
+    }
     state.name = parsed.name;
     if (parsed.date) state.date = parsed.date;
     state.drafts = parsed.drafts;
@@ -436,6 +465,9 @@ import { antiforgeryHeaders } from "./report-request.mjs";
   });
   els.whatsappClose.addEventListener("click", () => els.dialog.close());
   els.emailClose.addEventListener("click", () => els.emailDialog.close());
+  document.getElementById("clear-draft")?.addEventListener("click", () => {
+    clearDraftNow();
+  });
 
   const today = new Date();
   state.date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;

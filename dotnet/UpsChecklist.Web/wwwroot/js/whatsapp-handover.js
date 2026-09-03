@@ -62,13 +62,13 @@ window.WhatsAppHandover = {
     return "download-and-chat";
   },
   async prepareReport(payload, filename, signal, headers = {}) {
+    const { fetchWithTimeout } = await import("./report-request.mjs");
     const form = new FormData();
     form.set("checklist", payload);
-    const response = await fetch("/api/download", {
+    const response = await fetchWithTimeout("/api/download", {
       method: "POST",
       body: form,
       signal,
-      cache: "no-store",
       headers,
     });
     if (!response.ok || !response.headers.get("content-type")?.startsWith("application/pdf")) {

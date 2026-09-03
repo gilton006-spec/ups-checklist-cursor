@@ -2,6 +2,7 @@ using System.Net;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using UpsChecklist.Core;
 
 namespace UpsChecklist.Tests;
 
@@ -43,12 +44,65 @@ public sealed class SiteAccessTests
         Assert.Equal(HttpStatusCode.OK, home.StatusCode);
     }
 
+    [Fact]
+    public async Task Sign_out_clears_access_cookie()
+    {
+        await using var factory = new PasswordProtectedFactory();
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+        var loginHtml = await (await client.GetAsync("/Login")).Content.ReadAsStringAsync();
+        using var form = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Password"] = "eindhoven",
+            ["__RequestVerificationToken"] = ExtractAntiForgery(loginHtml),
+        });
+        Assert.Equal(HttpStatusCode.Redirect, (await client.PostAsync("/Login", form)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/")).StatusCode);
+
+        var homeHtml = await (await client.GetAsync("/")).Content.ReadAsStringAsync();
+        using var logout = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ExtractAntiForgery(homeHtml),
+        });
+        var logoutResponse = await client.PostAsync("/Logout", logout);
+        Assert.Equal(HttpStatusCode.Redirect, logoutResponse.StatusCode);
+
+        var blocked = await client.GetAsync("/");
+        Assert.Equal(HttpStatusCode.Redirect, blocked.StatusCode);
+        Assert.Contains("/Login", blocked.Headers.Location?.OriginalString, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Production_like_hosts_fail_closed_without_password()
+    {
+        var options = new SiteAccessOptions { Password = "", AllowOpenAccess = false };
+        Assert.True(options.IsMisconfigured(isProductionLike: true));
+        Assert.False(options.IsMisconfigured(isProductionLike: false));
+
+        options.AllowOpenAccess = true;
+        Assert.False(options.IsMisconfigured(isProductionLike: true));
+
+        options.AllowOpenAccess = false;
+        options.Password = "secret";
+        Assert.False(options.IsMisconfigured(isProductionLike: true));
+    }
+
     private static string ExtractAntiForgery(string html)
     {
         const string marker = "name=\"__RequestVerificationToken\" type=\"hidden\" value=\"";
         var start = html.IndexOf(marker, StringComparison.Ordinal);
-        Assert.True(start >= 0, "Anti-forgery token missing from login page.");
-        start += marker.Length;
+        if (start < 0)
+        {
+            const string alt = "name=\"__RequestVerificationToken\" value=\"";
+            start = html.IndexOf(alt, StringComparison.Ordinal);
+            Assert.True(start >= 0, "Anti-forgery token missing.");
+            start += alt.Length;
+        }
+        else
+        {
+            start += marker.Length;
+        }
+
         var end = html.IndexOf('"', start);
         return html[start..end];
     }

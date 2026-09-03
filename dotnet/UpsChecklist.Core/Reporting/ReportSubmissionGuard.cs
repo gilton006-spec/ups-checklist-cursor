@@ -10,25 +10,48 @@ namespace UpsChecklist.Core.Reporting;
 /// </summary>
 public sealed class ReportSubmissionGuard(TimeSpan? window = null)
 {
-    private readonly TimeSpan _window = window ?? TimeSpan.FromSeconds(45);
+    private readonly TimeSpan _window = window ?? TimeSpan.FromMinutes(10);
     private readonly ConcurrentDictionary<string, DateTimeOffset> _recent = new();
 
-    public bool TryAccept(string payload)
+    public bool TryReserve(string payload)
     {
-        Prune(DateTimeOffset.UtcNow);
-        var key = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload)));
+        var key = Hash(payload);
         var now = DateTimeOffset.UtcNow;
-        if (_recent.TryGetValue(key, out var previous) && now - previous < _window)
-            return false;
-        _recent[key] = now;
-        return true;
+        Prune(now);
+
+        while (true)
+        {
+            if (_recent.TryAdd(key, now))
+                return true;
+
+            if (!_recent.TryGetValue(key, out var previous))
+                continue;
+
+            if (now - previous < _window)
+                return false;
+
+            // Expired reservation: only one thread wins the replace.
+            if (_recent.TryUpdate(key, now, previous))
+                return true;
+        }
     }
 
-    public void Release(string payload)
+    /// <summary>
+    /// Clears a reservation only when the server knows the mail transport was never contacted
+    /// (validation/PDF failure before Send). Do not call after an uncertain SMTP outcome.
+    /// </summary>
+    public void ReleaseAfterDefiniteFailure(string payload)
     {
-        var key = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload)));
-        _recent.TryRemove(key, out _);
+        _recent.TryRemove(Hash(payload), out _);
     }
+
+    // Kept for tests/call sites that still use the short name.
+    public bool TryAccept(string payload) => TryReserve(payload);
+
+    public void Release(string payload) => ReleaseAfterDefiniteFailure(payload);
+
+    private static string Hash(string payload) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload)));
 
     private void Prune(DateTimeOffset now)
     {

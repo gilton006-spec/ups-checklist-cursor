@@ -8,15 +8,15 @@ Keep Core (rules + PDF) and Web (HTTP + SMTP). Extra projects, repositories, and
 
 ## ADR 2 — Shared password, not user accounts
 
-Operators asked for a single site password. It is stored in hosting secrets, compared in lowercase, and issued as a 12-hour cookie. It does not identify a person and is not UPS SSO.
+Operators asked for a single site password. It is stored in hosting secrets, compared in lowercase, and issued as a 12-hour cookie. It does not identify a person and is not UPS SSO. Production-like hosts (Production, Staging, or `FLY_APP_NAME`) refuse to start without `SiteAccess:Password` unless `SiteAccess:AllowOpenAccess=true` is explicitly approved. Login POSTs use the `login` rate limit. Sign-out is POST `/Logout`.
 
 ## ADR 3 — Tab sessionStorage drafts
 
-Approved for this prototype: survive refresh, die when the tab closes. No server retention. Photos may be dropped under quota.
+Approved for this prototype: survive refresh within the tab. Closing the tab usually clears storage, but browser session restore can revive it, so drafts older than 18 hours are discarded on restore and the UI offers Clear draft. No server retention. Photos may be dropped under quota; save failures surface a status message.
 
 ## ADR 4 — Best-effort duplicate email window
 
-In-memory SHA-256 of the payload, ~45 seconds, single process. Released if send fails. Not reliable across Fly machines or restarts. A durable store would need explicit approval.
+In-memory SHA-256 of the payload, ~10 minutes, single process. Reservation uses atomic `TryAdd` / `TryUpdate`. Released only after a definite failure before SMTP contact. Uncertain SMTP outcomes keep the reservation so an identical retry is blocked. Not reliable across Fly machines or restarts. A durable store would need explicit approval.
 
 ## ADR 5 — Forwarded headers only on Fly
 

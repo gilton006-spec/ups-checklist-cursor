@@ -8,6 +8,7 @@ import {
   clearSessionKey,
   cloneChecklistSnapshot,
   draftHasContent,
+  isDraftWithinAge,
   parseChecklistSnapshot,
   parseScannerStore,
   readSessionJson,
@@ -134,4 +135,12 @@ test('clearing removes the session key used by the pages', () => {
   clearSessionKey(storage, CHECKLIST_DRAFT_KEY);
   assert.equal(readSessionJson(storage, CHECKLIST_DRAFT_KEY), null);
   assert.equal(readSessionJson(storage, SCANNER_DRAFT_KEY), 'y');
+});
+
+test('draft age helper rejects missing and stale timestamps', () => {
+  assert.equal(isDraftWithinAge(''), false);
+  assert.equal(isDraftWithinAge('not-a-date'), false);
+  const now = Date.parse('2026-09-03T12:00:00.000Z');
+  assert.equal(isDraftWithinAge('2026-09-03T11:00:00.000Z', now), true);
+  assert.equal(isDraftWithinAge('2026-09-02T12:00:00.000Z', now), false);
 });

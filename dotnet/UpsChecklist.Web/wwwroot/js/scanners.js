@@ -2,11 +2,13 @@ import { versionForDate, localDate, createDraftStore, assignedCount, sheetLabel 
 import {
   SCANNER_DRAFT_KEY,
   clearSessionKey,
+  isDraftWithinAge,
   parseScannerStore,
   readSessionJson,
   serializeScannerStore,
   writeSessionCandidates,
 } from './session-draft.mjs';
+import { fetchWithTimeout, antiforgeryHeaders } from './report-request.mjs';
 
 const catalog = JSON.parse(document.getElementById('scanner-source').textContent);
 const byId = id => document.getElementById(id);
@@ -23,17 +25,37 @@ let restoreNotice = '';
 function persistScannerDraftNow() {
   if (!drafts.hasEntries()) {
     clearSessionKey(sessionStorage, SCANNER_DRAFT_KEY);
-    return;
+    return { ok: true, omitted: false };
   }
-  writeSessionCandidates(sessionStorage, SCANNER_DRAFT_KEY, [serializeScannerStore(drafts.exportMap(), {
+  const result = writeSessionCandidates(sessionStorage, SCANNER_DRAFT_KEY, [serializeScannerStore(drafts.exportMap(), {
     date: date.value || '',
     sheetId: picker.value || sheet?.id || '',
   })]);
+  if (!result.ok) {
+    restoreNotice = 'Could not save the draft in this browser tab. Keep this page open until you download the PDF.';
+    status.textContent = restoreNotice;
+  }
+  return result;
+}
+
+function clearScannerDraftNow() {
+  clearSessionKey(sessionStorage, SCANNER_DRAFT_KEY);
+  drafts.replaceAll(new Map());
+  restoreNotice = 'Draft cleared for this browser tab.';
+  status.textContent = restoreNotice;
+  if (sheet) showSheet();
+  else updateProgress();
 }
 
 function restoreScannerDraft() {
-  const parsed = parseScannerStore(readSessionJson(sessionStorage, SCANNER_DRAFT_KEY));
+  const raw = readSessionJson(sessionStorage, SCANNER_DRAFT_KEY);
+  const parsed = parseScannerStore(raw);
   if (!parsed?.drafts?.size) return null;
+  if (!isDraftWithinAge(parsed.savedAt)) {
+    clearSessionKey(sessionStorage, SCANNER_DRAFT_KEY);
+    restoreNotice = 'An old scanner draft was discarded.';
+    return null;
+  }
   drafts.replaceAll(parsed.drafts);
   if (!drafts.hasEntries()) return null;
   return parsed;
@@ -214,11 +236,11 @@ byId('scanner-form').addEventListener('submit', async event => {
   const payload = JSON.stringify({ date: date.value, versionId: version.id, sheetId: sheet.id, entries });
   const filename = `UPS_scanners_${version.id}_${sheet.id}_${date.value}.pdf`;
   try {
-    const response = await fetch('/api/scanners/download', {
+    const response = await fetchWithTimeout('/api/scanners/download', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value,
+        ...antiforgeryHeaders(),
       },
       body: payload,
     });
@@ -258,4 +280,7 @@ window.addEventListener('beforeunload', event => {
 window.addEventListener('pagehide', flushDraftOnLeave);
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') flushDraftOnLeave();
+});
+byId('scanner-clear-draft')?.addEventListener('click', () => {
+  clearScannerDraftNow();
 });

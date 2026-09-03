@@ -16,6 +16,13 @@
     <nav class="workflow-nav" aria-label="Forms">
         <a href="/" aria-current="page">Jambreakers</a>
         <a href="/Scanners" id="open-scanners">Scanner lists</a>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <form method="post" asp-page="/Logout" class="workflow-nav-form">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn secondary">Sign out</button>
+            </form>
+        }
     </nav>
     <p class="demo-label">Demo only. Not UPS approved.</p>
     <div id="position-header" class="position-header hidden">
@@ -69,7 +76,10 @@
                 <canvas id="signature-canvas" width="700" height="180" aria-label="Draw your signature"></canvas>
                 <button type="button" class="btn secondary" id="clear-signature">Clear</button>
             </div>
-            <p class="field-hint">This browser tab keeps a temporary draft after refresh. Closing the tab clears it. PDFs and photos use external hosting when you generate a report. No server archive.</p>
+            <p class="field-hint">This browser tab keeps a temporary draft after refresh. Closing the tab usually clears it; browser session restore can bring a draft back. Drafts older than 18 hours are discarded. PDFs and photos use external hosting when you generate a report. No server archive.</p>
+            <p class="draft-tools">
+                <button type="button" class="btn secondary" id="clear-draft">Clear draft</button>
+            </p>
         </section>
     </div>
     <div class="status-area" role="status" aria-live="polite" id="status-area"></div>
@@ -92,7 +102,7 @@
         <p id="whatsapp-error" class="photo-error hidden" role="alert"></p>
         <button type="button" class="btn whatsapp-button hidden" id="whatsapp-share">Share to +31 626149058</button>
         <p class="handover-hint hidden" id="whatsapp-hint-desktop">On a computer, use Send report instead. WhatsApp file sharing works on a phone.</p>
-        <p class="handover-hint hidden" id="whatsapp-hint-share">Choose WhatsApp, pick +31 626149058, and confirm sending. Closing this tab clears the temporary draft.</p>
+        <p class="handover-hint hidden" id="whatsapp-hint-share">Choose WhatsApp, pick +31 626149058, and confirm sending. Use Clear draft when you are done with this tab.</p>
         <p class="handover-hint hidden" id="whatsapp-message" role="status"></p>
         <button type="button" class="btn secondary" id="whatsapp-close">Close</button>
     </dialog>

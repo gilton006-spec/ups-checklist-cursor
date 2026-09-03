@@ -18,7 +18,7 @@ Operators (jambreakers and team leaders) record:
 4. Before-sort and after-sort evidence photos.
 5. A PDF, then email and/or WhatsApp handover.
 
-There is **no server-side report archive**. Entries live in the browser tab (`sessionStorage` after refresh; gone when the tab closes). Generating a PDF or email sends the payload to this app for that request only.
+There is **no server-side report archive**. Entries live in the browser tab (`sessionStorage` after refresh). Closing the tab usually clears them; browser session restore can revive a draft, so old drafts expire and Clear draft is available. Generating a PDF or email sends the payload to this app for that request only.
 
 ---
 
@@ -42,8 +42,8 @@ dotnet/
     ScannerEndpoints.cs
     Services/ChecklistReportService.cs
     Http/                     Bounded reads, CSRF helper, site-access gate
-    Infrastructure/           MailKitHandoverEmailSender
-    Pages/                    Index, Scanners, Login, Error
+    Infrastructure/           MailKitHandoverEmailSender, EtherealEmailProvisioner
+    Pages/                    Index, Scanners, Login, Logout, Error
     wwwroot/js/               Checklist, scanners, photos, signature, drafts
   UpsChecklist.Tests/         xUnit: Core + in-process HTTP
   tools/ScannerRegressionTests/
@@ -112,11 +112,11 @@ Order in `Program.cs`:
 4. Static files (workbook images, CSS, JS) — **not** behind the password gate.
 5. Routing, rate limiter.
 6. Cookie authentication.
-7. `SiteAccessMiddleware` — shared password when `SiteAccess:Password` is non-empty.
+7. `SiteAccessMiddleware` — shared password when `SiteAccess:Password` is non-empty; production-like hosts refuse misconfigured open access.
 8. Authorization.
 9. Razor Pages + mapped APIs.
 
-Anonymous paths when the gate is on: `/Login`, `/Error`, `/health`. Unauthenticated `/api/*` returns 401. Other pages redirect to login.
+Anonymous paths when the gate is on: `/Login`, `/Logout`, `/Error`, `/health`. Unauthenticated `/api/*` returns 401. Other pages redirect to login. Login POSTs are rate-limited separately from report POSTs.
 
 Antiforgery is **not** login. It only checks that a POST came from a page this app issued. The password cookie is the access boundary for this prototype. It does not identify a person and is not UPS SSO.
 
@@ -128,14 +128,15 @@ Antiforgery is **not** login. It only checks that a POST came from a page this a
 | --- | --- | --- | --- |
 | GET | `/` | Cookie | Jambreaker checklists |
 | GET | `/Scanners` | Cookie | Scanner lists |
-| GET/POST | `/Login` | Anonymous | Lowercased shared password |
+| GET/POST | `/Login` | Anonymous | Lowercased shared password; `login` rate limit |
+| POST | `/Logout` | Anonymous + cookie clear | Ends the site-access session |
 | GET | `/health` | Anonymous | `{ "status": "ok" }` only |
 | GET | `/api/handover-config` | Cookie | Recipient, configured flag, WhatsApp number, test-inbox flag |
-| POST | `/api/download` | Cookie + antiforgery | PDF; form `checklist` JSON or JSON body |
-| POST | `/api/email-handover` | Cookie + antiforgery | PDF then SMTP to **configured** recipient only |
+| POST | `/api/download` | Cookie + antiforgery | PDF via `CreatePdfReport`; form `checklist` JSON or JSON body |
+| POST | `/api/email-handover` | Cookie + antiforgery | Full `SendEmailHandoverAsync` workflow |
 | POST | `/api/scanners/download` | Cookie + antiforgery | Scanner PDF; JSON body, bounded to 64 KiB |
 
-Limits: checklist body **3 200 000** bytes (chunked counted). Scanner body **65 536** bytes. Rate policy `reports`: 30 POSTs / minute / observed IP / **this process**. Testing environment disables the limiter. Two Fly machines do not share the counter.
+Limits: checklist body **3 200 000** bytes (chunked counted). Scanner body **65 536** bytes. Rate policy `reports`: 30 POSTs / minute / observed IP / **this process**. Rate policy `login`: 10 POSTs / minute. Testing environment disables both limiters. Two Fly machines do not share the counters.
 
 Clients never choose the email recipient. `HandoverEmail:To` or the built-in handover address is used.
 
@@ -166,26 +167,34 @@ sequenceDiagram
   User->>UI: Fill checks, photos, signature
   UI->>UI: sessionStorage draft (this tab)
   User->>UI: Email or WhatsApp
-  UI->>Api: POST payload + RequestVerificationToken
+  UI->>Api: POST via fetchWithTimeout + RequestVerificationToken
   Api->>Api: Size bound, antiforgery, optional rate limit
-  Api->>Svc: ParseAndValidate
-  Note over Svc: Unchecked items stay false
-  Svc->>Pdf: Create(submission)
   alt WhatsApp / download
+    Api->>Svc: CreatePdfReport(payload)
+    Svc->>Pdf: Create(submission)
     Api-->>UI: PDF bytes
     UI-->>User: Save file or share sheet
     Note over UI: Share sheet is not delivery
   else Email
-    Svc->>Svc: Duplicate window (in-memory, ~45s)
+    Api->>Svc: SendEmailHandoverAsync(payload)
+    Svc->>Svc: Atomic duplicate reserve
+    Svc->>Pdf: Create(submission)
     Svc->>Mail: Send to configured address only
-    Mail-->>Svc: Transport accepted or throw
-    Api-->>UI: deliveryConfirmed=false plus wording
+    alt Transport accepted
+      Api-->>UI: deliveryConfirmed=false
+    else Failed before SMTP
+      Svc->>Svc: Release reservation
+      Api-->>UI: 4xx/5xx definite failure
+    else Outcome unknown after SMTP contact
+      Note over Svc: Keep reservation
+      Api-->>UI: 502; check before retry
+    end
   end
 ```
 
-If send throws after the duplicate key was taken, the key is **released** so a retry is allowed. The window is not durable and not shared across machines. A queue or database would need explicit approval.
+Duplicate reservations are released only for definite pre-SMTP failures. Uncertain SMTP outcomes keep the key so an identical retry is blocked. The window is not durable and not shared across machines. A queue or database would need explicit approval.
 
-Development without SMTP config may provision an Ethereal test inbox. Credentials are **not** printed. The API sets `usesTempInbox` so the UI can say it is not a live company inbox.
+Development without SMTP config may provision an Ethereal test inbox (**Web** `EtherealEmailProvisioner`, not Core). Credentials are **not** printed. The API sets `usesTempInbox` so the UI can say it is not a live company inbox.
 
 ---
 

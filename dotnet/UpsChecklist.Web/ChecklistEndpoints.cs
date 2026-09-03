@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.RateLimiting;
 using UpsChecklist.Core;
-using UpsChecklist.Core.Reporting;
 using UpsChecklist.Web.Http;
 using UpsChecklist.Web.Services;
 
@@ -42,32 +41,18 @@ public static class ChecklistEndpoints
 
         try
         {
-            var data = reports.Parse(payload!);
-            var bytes = reports.CreatePdf(data);
-            var filename = WhatsAppConstants.ReportFilename(data.PositionId, data.Date);
-            return Results.File(bytes, "application/pdf", filename);
-        }
-        catch (ChecklistValidationException ex)
-        {
-            return RequestProtection.TextError(ex.Message, StatusCodes.Status400BadRequest);
+            return reports.CreatePdfReport(payload!) switch
+            {
+                PdfCreateResult.Ok ok => Results.File(ok.Report.Bytes, "application/pdf", ok.Report.Filename),
+                PdfCreateResult.Invalid invalid => RequestProtection.TextError(invalid.Message, StatusCodes.Status400BadRequest),
+                PdfCreateResult.FontRejected font => RequestProtection.TextError(font.Message, StatusCodes.Status400BadRequest),
+                PdfCreateResult.Failed failed => RequestProtection.TextError(failed.Message, StatusCodes.Status500InternalServerError),
+                _ => RequestProtection.TextError("Unexpected PDF result.", StatusCodes.Status500InternalServerError),
+            };
         }
         catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
         {
             throw;
-        }
-        catch (Exception ex) when (ex.Message.Contains("WinAnsi", StringComparison.OrdinalIgnoreCase)
-            || ex.Message.Contains("does not support U+", StringComparison.Ordinal))
-        {
-            return RequestProtection.TextError(
-                "Please go back and use standard Latin letters in the text fields, or draw your signature.",
-                StatusCodes.Status400BadRequest);
-        }
-        catch (Exception ex)
-        {
-            reports.LogPdfFailure(ex);
-            return RequestProtection.TextError(
-                "The PDF could not be created. Your checklist is still open. Try again.",
-                StatusCodes.Status500InternalServerError);
         }
     }
 
@@ -82,57 +67,34 @@ public static class ChecklistEndpoints
 
         try
         {
-            if (!reports.EmailIsConfigured)
+            return await reports.SendEmailHandoverAsync(payload!, context.RequestAborted) switch
             {
-                return Results.Json(new
+                EmailHandoverResult.NotConfigured => Results.Json(new
                 {
                     message = "Company email is not configured on this server. Download the PDF or use WhatsApp.",
-                }, statusCode: StatusCodes.Status503ServiceUnavailable);
-            }
-
-            var data = reports.Parse(payload!);
-            if (!reports.TryAcceptSubmission(payload!))
-            {
-                return Results.Json(new
+                }, statusCode: StatusCodes.Status503ServiceUnavailable),
+                EmailHandoverResult.Duplicate => Results.Json(new
                 {
                     message = "This same report was just submitted. Check the inbox before sending again. If you already sent it, do not assume a second copy is needed.",
-                }, statusCode: StatusCodes.Status409Conflict);
-            }
-
-            try
-            {
-                var bytes = reports.CreatePdf(data);
-                var filename = WhatsAppConstants.ReportFilename(data.PositionId, data.Date);
-                var outcome = await reports.SendEmailAsync(bytes, filename, context.RequestAborted);
-                return Results.Json(new
+                }, statusCode: StatusCodes.Status409Conflict),
+                EmailHandoverResult.Accepted accepted => Results.Json(new
                 {
-                    address = outcome.DisplayAddress,
-                    message = outcome.UserMessage,
-                    devInboxUrl = outcome.DevInboxUrl,
-                    usesTempInbox = outcome.UsesTempInbox,
+                    address = accepted.Outcome.DisplayAddress,
+                    message = accepted.Outcome.UserMessage,
+                    devInboxUrl = accepted.Outcome.DevInboxUrl,
+                    usesTempInbox = accepted.Outcome.UsesTempInbox,
                     deliveryConfirmed = false,
-                });
-            }
-            catch
-            {
-                reports.ReleaseSubmission(payload!);
-                throw;
-            }
-        }
-        catch (ChecklistValidationException ex)
-        {
-            return RequestProtection.TextError(ex.Message, StatusCodes.Status400BadRequest);
+                }),
+                EmailHandoverResult.Invalid invalid => RequestProtection.TextError(invalid.Message, StatusCodes.Status400BadRequest),
+                EmailHandoverResult.FontRejected font => RequestProtection.TextError(font.Message, StatusCodes.Status400BadRequest),
+                EmailHandoverResult.FailedBeforeSend failed => RequestProtection.TextError(failed.Message, StatusCodes.Status500InternalServerError),
+                EmailHandoverResult.OutcomeUnknown unknown => RequestProtection.TextError(unknown.Message, StatusCodes.Status502BadGateway),
+                _ => RequestProtection.TextError("Unexpected email result.", StatusCodes.Status500InternalServerError),
+            };
         }
         catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
         {
             throw;
-        }
-        catch (Exception ex)
-        {
-            reports.LogEmailFailure(ex);
-            return RequestProtection.TextError(
-                "The email could not be handed to the mail server. Your checklist is still open. Whether anything arrived is unknown; check before retrying.",
-                StatusCodes.Status502BadGateway);
         }
     }
 

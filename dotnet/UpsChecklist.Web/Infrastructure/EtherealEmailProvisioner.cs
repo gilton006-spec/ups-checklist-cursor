@@ -1,8 +1,13 @@
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
+using UpsChecklist.Core;
 
-namespace UpsChecklist.Core;
+namespace UpsChecklist.Web.Infrastructure;
 
+/// <summary>
+/// Creates a temporary Ethereal inbox for local Development when SMTP is not configured.
+/// Lives in Web because Core must not perform HTTP calls.
+/// </summary>
 public static class EtherealEmailProvisioner
 {
     public sealed record TempInbox(

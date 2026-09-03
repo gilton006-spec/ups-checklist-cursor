@@ -28,6 +28,18 @@ builder.Services.PostConfigure<SiteAccessOptions>(options =>
 });
 builder.Services.Configure<HandoverEmailOptions>(builder.Configuration.GetSection(HandoverEmailOptions.SectionName));
 
+var siteAccessPreview = builder.Configuration.GetSection(SiteAccessOptions.SectionName).Get<SiteAccessOptions>()
+    ?? new SiteAccessOptions();
+siteAccessPreview.Password = (siteAccessPreview.Password ?? "").Trim().ToLowerInvariant();
+var productionLike = builder.Environment.IsProduction()
+    || builder.Environment.IsStaging()
+    || !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("FLY_APP_NAME"));
+if (siteAccessPreview.IsMisconfigured(productionLike))
+{
+    throw new InvalidOperationException(
+        "SiteAccess:Password is required on Production/Staging/Fly. Set SiteAccess__Password, or set SiteAccess:AllowOpenAccess=true only if open access is explicitly approved.");
+}
+
 if (builder.Environment.IsDevelopment() && !emailOptions.IsConfigured)
 {
     var temp = await EtherealEmailProvisioner.ProvisionAsync();
@@ -60,6 +72,7 @@ builder.Services.AddRazorPages(options =>
 {
     options.Conventions.AllowAnonymousToPage("/Login");
     options.Conventions.AllowAnonymousToPage("/Error");
+    options.Conventions.AllowAnonymousToPage("/Logout");
 });
 
 builder.Services.AddRateLimiter(options =>
@@ -69,7 +82,7 @@ builder.Services.AddRateLimiter(options =>
     {
         var environment = httpContext.RequestServices.GetRequiredService<IHostEnvironment>();
         if (environment.IsEnvironment("Testing"))
-            return RateLimitPartition.GetNoLimiter("test");
+            return RateLimitPartition.GetNoLimiter("test-reports");
 
         var key = httpContext.Connection.RemoteIpAddress?.ToString() ?? "anon";
         return RateLimitPartition.GetFixedWindowLimiter(key, _ => new FixedWindowRateLimiterOptions
@@ -79,11 +92,28 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit = 0,
         });
     });
+    options.AddPolicy("login", httpContext =>
+    {
+        var environment = httpContext.RequestServices.GetRequiredService<IHostEnvironment>();
+        if (environment.IsEnvironment("Testing"))
+            return RateLimitPartition.GetNoLimiter("test-login");
+
+        var key = httpContext.Connection.RemoteIpAddress?.ToString() ?? "anon";
+        return RateLimitPartition.GetFixedWindowLimiter(key, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+        });
+    });
     options.OnRejected = async (context, token) =>
     {
         context.HttpContext.Response.ContentType = "text/plain; charset=utf-8";
-        await context.HttpContext.Response.WriteAsync(
-            "Too many report requests from this instance. Wait a minute and try again.", token);
+        var path = context.HttpContext.Request.Path;
+        var message = path.StartsWithSegments("/Login")
+            ? "Too many login attempts from this instance. Wait a minute and try again."
+            : "Too many report requests from this instance. Wait a minute and try again.";
+        await context.HttpContext.Response.WriteAsync(message, token);
     };
 });
 
@@ -106,6 +136,8 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(optio
     options.MultipartBodyLengthLimit = ChecklistValidator.MaxBodyBytes;
 });
 
+// Fly terminates TLS at the edge and injects X-Forwarded-* . Clearing KnownProxies trusts
+// those headers from any peer; that is only acceptable behind Fly's private network.
 if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("FLY_APP_NAME")))
 {
     builder.Services.Configure<ForwardedHeadersOptions>(options =>

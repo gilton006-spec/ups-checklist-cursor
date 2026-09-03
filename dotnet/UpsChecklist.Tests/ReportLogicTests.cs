@@ -9,11 +9,24 @@ public sealed class ReportSubmissionGuardTests
     public void Duplicate_payloads_are_rejected_inside_the_window_then_released()
     {
         var guard = new ReportSubmissionGuard(TimeSpan.FromMinutes(1));
-        Assert.True(guard.TryAccept("same"));
-        Assert.False(guard.TryAccept("same"));
-        Assert.True(guard.TryAccept("other"));
-        guard.Release("same");
-        Assert.True(guard.TryAccept("same"));
+        Assert.True(guard.TryReserve("same"));
+        Assert.False(guard.TryReserve("same"));
+        Assert.True(guard.TryReserve("other"));
+        guard.ReleaseAfterDefiniteFailure("same");
+        Assert.True(guard.TryReserve("same"));
+    }
+
+    [Fact]
+    public void Concurrent_reserve_allows_only_one_winner()
+    {
+        var guard = new ReportSubmissionGuard(TimeSpan.FromMinutes(1));
+        var accepted = 0;
+        Parallel.For(0, 64, _ =>
+        {
+            if (guard.TryReserve("race-payload"))
+                Interlocked.Increment(ref accepted);
+        });
+        Assert.Equal(1, accepted);
     }
 }
 

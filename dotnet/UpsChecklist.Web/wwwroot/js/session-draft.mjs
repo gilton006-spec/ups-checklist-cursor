@@ -2,6 +2,15 @@
 
 export const CHECKLIST_DRAFT_KEY = "ups-checklist:v1:jambreaker";
 export const SCANNER_DRAFT_KEY = "ups-checklist:v1:scanners";
+/** Discard restored drafts older than this (browser session restore can revive them). */
+export const DRAFT_MAX_AGE_MS = 18 * 60 * 60 * 1000;
+
+export function isDraftWithinAge(savedAt, nowMs = Date.now(), maxAgeMs = DRAFT_MAX_AGE_MS) {
+  if (!savedAt) return false;
+  const parsed = Date.parse(savedAt);
+  if (Number.isNaN(parsed)) return false;
+  return nowMs - parsed <= maxAgeMs;
+}
 
 export function draftHasContent(draft) {
   if (!draft || typeof draft !== "object") return false;

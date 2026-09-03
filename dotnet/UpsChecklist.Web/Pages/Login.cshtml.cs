@@ -5,12 +5,14 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using UpsChecklist.Core;
 
 namespace UpsChecklist.Web.Pages;
 
 [AllowAnonymous]
+[EnableRateLimiting("login")]
 public sealed class LoginModel(IOptions<SiteAccessOptions> accessOptions) : PageModel
 {
     private readonly SiteAccessOptions _access = accessOptions.Value;

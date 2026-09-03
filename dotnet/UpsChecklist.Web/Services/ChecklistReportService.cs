@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Options;
 using UpsChecklist.Core;
-using UpsChecklist.Core.Models;
 using UpsChecklist.Core.Reporting;
 
 namespace UpsChecklist.Web.Services;
@@ -17,29 +16,92 @@ public sealed class ChecklistReportService(
     public static readonly EventId EmailFailed = new(2102, nameof(EmailFailed));
     public static readonly EventId EmailAccepted = new(2103, nameof(EmailAccepted));
 
-    public ChecklistSubmission Parse(string json) => ChecklistValidator.ParseAndValidate(json);
-
-    public byte[] CreatePdf(ChecklistSubmission data) => pdf.Create(data);
-
     public bool EmailIsConfigured => emailOptions.Value.IsConfigured;
 
-    public bool TryAcceptSubmission(string payload) => duplicates.TryAccept(payload);
-
-    public void ReleaseSubmission(string payload) => duplicates.Release(payload);
-
-    public async Task<EmailHandoverOutcome> SendEmailAsync(byte[] pdfBytes, string filename, CancellationToken cancellationToken)
+    public PdfCreateResult CreatePdfReport(string payload)
     {
-        if (!EmailIsConfigured)
-            throw new InvalidOperationException("Email handover is not configured.");
-
-        await email.SendAsync(pdfBytes, filename, cancellationToken);
-        logger.LogInformation(EmailAccepted, "Handover email accepted by transport. TestInbox={TestInbox}", runtime.UsesTempInbox);
-        return new EmailHandoverOutcome(runtime.DisplayAddress, runtime.UsesTempInbox, runtime.DevInboxUrl);
+        try
+        {
+            var data = ChecklistValidator.ParseAndValidate(payload);
+            var bytes = pdf.Create(data);
+            var filename = WhatsAppConstants.ReportFilename(data.PositionId, data.Date);
+            return new PdfCreateResult.Ok(new PdfReportResult(bytes, filename));
+        }
+        catch (ChecklistValidationException ex)
+        {
+            return new PdfCreateResult.Invalid(ex.Message);
+        }
+        catch (Exception ex) when (IsFontLimitation(ex))
+        {
+            return new PdfCreateResult.FontRejected(
+                "Please go back and use standard Latin letters in the text fields, or draw your signature.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(PdfFailed, ex, "Checklist PDF generation failed.");
+            return new PdfCreateResult.Failed(
+                "The PDF could not be created. Your checklist is still open. Try again.");
+        }
     }
 
-    public void LogPdfFailure(Exception exception) =>
-        logger.LogError(PdfFailed, exception, "Checklist PDF generation failed.");
+    /// <summary>
+    /// Full email handover: reserve → PDF → SMTP. Releases the reservation only when
+    /// the mail transport was never contacted.
+    /// </summary>
+    public async Task<EmailHandoverResult> SendEmailHandoverAsync(string payload, CancellationToken cancellationToken)
+    {
+        if (!EmailIsConfigured)
+            return new EmailHandoverResult.NotConfigured();
 
-    public void LogEmailFailure(Exception exception) =>
-        logger.LogError(EmailFailed, exception, "Handover email failed after PDF generation.");
+        if (!duplicates.TryReserve(payload))
+            return new EmailHandoverResult.Duplicate();
+
+        var contactedTransport = false;
+        try
+        {
+            var data = ChecklistValidator.ParseAndValidate(payload);
+            var bytes = pdf.Create(data);
+            var filename = WhatsAppConstants.ReportFilename(data.PositionId, data.Date);
+
+            contactedTransport = true;
+            await email.SendAsync(bytes, filename, cancellationToken);
+            logger.LogInformation(EmailAccepted, "Handover email accepted by transport. TestInbox={TestInbox}", runtime.UsesTempInbox);
+            return new EmailHandoverResult.Accepted(
+                new EmailHandoverOutcome(runtime.DisplayAddress, runtime.UsesTempInbox, runtime.DevInboxUrl));
+        }
+        catch (ChecklistValidationException ex)
+        {
+            duplicates.ReleaseAfterDefiniteFailure(payload);
+            return new EmailHandoverResult.Invalid(ex.Message);
+        }
+        catch (Exception ex) when (IsFontLimitation(ex))
+        {
+            duplicates.ReleaseAfterDefiniteFailure(payload);
+            return new EmailHandoverResult.FontRejected(
+                "Please go back and use standard Latin letters in the text fields, or draw your signature.");
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Client abandoned the request; keep reservation — outcome is unknown.
+            throw;
+        }
+        catch (Exception ex) when (!contactedTransport)
+        {
+            duplicates.ReleaseAfterDefiniteFailure(payload);
+            logger.LogError(PdfFailed, ex, "Checklist PDF generation failed before email send.");
+            return new EmailHandoverResult.FailedBeforeSend(
+                "The PDF could not be created. Your checklist is still open. Try again.");
+        }
+        catch (Exception ex)
+        {
+            // Do not release: SMTP may have accepted the message.
+            logger.LogError(EmailFailed, ex, "Handover email failed after contacting the mail transport.");
+            return new EmailHandoverResult.OutcomeUnknown(
+                "The email could not be handed to the mail server. Your checklist is still open. Whether anything arrived is unknown; check before retrying.");
+        }
+    }
+
+    private static bool IsFontLimitation(Exception ex) =>
+        ex.Message.Contains("WinAnsi", StringComparison.OrdinalIgnoreCase)
+        || ex.Message.Contains("does not support U+", StringComparison.Ordinal);
 }
