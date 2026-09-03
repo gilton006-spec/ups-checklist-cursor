@@ -97,4 +97,10 @@ internal static class PdfTestHelpers
             .Select((page, index) => (Page: index + 1, TextLength: page.Text.Length, ImageCount: page.GetImages().Count()))
             .ToList();
     }
+
+    public static string AllText(byte[] bytes)
+    {
+        using var pdf = PdfDocument.Open(bytes);
+        return string.Join('\n', pdf.GetPages().Select(page => page.Text));
+    }
 }

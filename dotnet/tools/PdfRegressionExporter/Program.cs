@@ -60,6 +60,7 @@ void Export(Position position, string culture, string suffix, string photoData, 
         SectionRemarks = position.Sections.Where(s => s.RemarksKey is not null)
             .ToDictionary(s => s.RemarksKey!, _ => "Section checked. No outstanding issue."),
         EvidencePhoto = photoData,
+        BeforeSortEvidencePhoto = suffix.Contains("jpeg", StringComparison.Ordinal) ? photoData : "",
         Drawn = drawn,
     };
     var file = $"{position.Id}-{culture}{suffix}.pdf";
@@ -70,6 +71,8 @@ void Export(Position position, string culture, string suffix, string photoData, 
         name = data.Name, date = data.Date, count = data.Count, signature = data.Signature,
         remarks, checks, drawn = drawn.Length != 0,
         minimumImages = position.Sections.Sum(s => s.Images?.Count ?? 0)
-            + (photoData.Length != 0 ? 1 : 0) + (drawn.Length != 0 ? 1 : 0),
+            + (photoData.Length != 0 ? 1 : 0)
+            + (data.BeforeSortEvidencePhoto.Length != 0 ? 1 : 0)
+            + (drawn.Length != 0 ? 1 : 0),
     });
 }

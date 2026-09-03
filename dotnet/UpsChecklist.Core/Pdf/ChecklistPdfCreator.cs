@@ -92,6 +92,19 @@ public sealed class ChecklistPdfCreator
             }
         }
 
+        void EvidenceBlock(string label, string photo, double reserveBelow = 0)
+        {
+            if (string.IsNullOrEmpty(photo))
+                return;
+
+            Ensure(180 + 34 + reserveBelow);
+            var maxHeight = Math.Min(360, Math.Max(80, ctx.Y - 55 - 34 - reserveBelow));
+            ctx.DrawText(label, M, ctx.Y - 11, 10, PdfPalette.Brown);
+            ctx.Y -= 20;
+            var size = ctx.DrawImageDataUrl(photo, M + Cw / 2, ctx.Y, Cw, maxHeight, center: true);
+            ctx.Y -= size.Height + 14;
+        }
+
         NewPage();
         Paragraph("PROTOTYPE FOR REVIEW. Not UPS approved. Downloading does not submit this report.", 9, PdfPalette.Muted);
         var warning = ChecklistPositions.ScheduleWarning(position, data.Date);
@@ -149,6 +162,9 @@ public sealed class ChecklistPdfCreator
                 Remarks($"remarks_{section.RemarksKey}", label, data.SectionRemarks.GetValueOrDefault(section.RemarksKey) ?? "");
             }
 
+            if (section.Id == "before")
+                EvidenceBlock("Before-sort evidence photo", data.BeforeSortEvidencePhoto);
+
             ctx.Y -= 8;
         }
 
@@ -162,15 +178,7 @@ public sealed class ChecklistPdfCreator
             Paragraph("Confirm the digital handover process with your team leader. Downloading does not send the report.", 9, PdfPalette.Muted);
         }
 
-        if (!string.IsNullOrEmpty(data.EvidencePhoto))
-        {
-            Ensure(180 + 34 + 100);
-            var maxHeight = Math.Min(360, ctx.Y - 55 - 34 - 100);
-            ctx.DrawText("Evidence photo", M, ctx.Y - 11, 10, PdfPalette.Brown);
-            ctx.Y -= 20;
-            var size = ctx.DrawImageDataUrl(data.EvidencePhoto, M + Cw / 2, ctx.Y, Cw, maxHeight, center: true);
-            ctx.Y -= size.Height + 14;
-        }
+        EvidenceBlock("After-sort evidence photo", data.EvidencePhoto, reserveBelow: 100);
 
         if (!string.IsNullOrEmpty(data.Drawn))
         {

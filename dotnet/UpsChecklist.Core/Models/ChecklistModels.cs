@@ -33,6 +33,7 @@ public sealed class ChecklistSubmission
     public string Count { get; init; } = "";
     public string Remarks { get; init; } = "";
     public Dictionary<string, string> SectionRemarks { get; init; } = new();
+    public string BeforeSortEvidencePhoto { get; init; } = "";
     public string EvidencePhoto { get; init; } = "";
     public string Signature { get; init; } = "";
     public string Drawn { get; init; } = "";

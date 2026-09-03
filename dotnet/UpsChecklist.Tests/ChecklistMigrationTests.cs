@@ -168,6 +168,22 @@ public class ChecklistMigrationTests : IClassFixture<ChecklistWebApplicationFact
     }
 
     [Fact]
+    public async Task Before_and_after_sort_evidence_are_both_embedded()
+    {
+        var position = ChecklistPositions.Get("pd4")!;
+        var data = SampleData(
+            position,
+            "2026-09-02",
+            evidencePhoto: PngDataUrl("image13.png"),
+            beforeSortEvidencePhoto: EvidenceFixtures.JpegPhoto);
+
+        var bytes = await DownloadPdfAsync(data);
+        Assert.True(PdfTestHelpers.HasImage(bytes, 104, 372));
+        Assert.True(PdfTestHelpers.HasImage(bytes, 32, 24));
+        Assert.Equal(data.Signature, PdfTestHelpers.TextFieldValue(PdfTestHelpers.RequireForm(bytes), "signature"));
+    }
+
+    [Fact]
     public async Task Unsupported_malformed_and_oversized_evidence_is_rejected()
     {
         var data = SampleData(ChecklistPositions.All[0], "2026-09-07");
@@ -181,10 +197,14 @@ public class ChecklistMigrationTests : IClassFixture<ChecklistWebApplicationFact
             var submission = SampleData(ChecklistPositions.All[0], "2026-09-07", evidencePhoto: evidence);
             var response = await PostDownloadAsync(submission);
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+            submission = SampleData(ChecklistPositions.All[0], "2026-09-07", beforeSortEvidencePhoto: evidence);
+            response = await PostDownloadAsync(submission);
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
 
         var client = _factory.CreateClient();
-        using var content = new StringContent(new string('x', 1_600_001), null, "application/x-www-form-urlencoded");
+        using var content = new StringContent(new string('x', ChecklistValidator.MaxBodyBytes + 1), null, "application/x-www-form-urlencoded");
         var large = await client.PostAsync("/api/download", content);
         Assert.Equal(HttpStatusCode.RequestEntityTooLarge, large.StatusCode);
     }
@@ -304,6 +324,7 @@ public class ChecklistMigrationTests : IClassFixture<ChecklistWebApplicationFact
         string? remarks = null,
         Dictionary<string, string>? sectionRemarks = null,
         string? evidencePhoto = null,
+        string? beforeSortEvidencePhoto = null,
         string? drawn = null,
         string? signature = null) => new()
     {
@@ -319,6 +340,7 @@ public class ChecklistMigrationTests : IClassFixture<ChecklistWebApplicationFact
             .Where(s => s.RemarksKey is not null)
             .ToDictionary(s => s.RemarksKey!, _ => "DEMO: Area reviewed; follow-up recorded."),
         EvidencePhoto = evidencePhoto ?? "",
+        BeforeSortEvidencePhoto = beforeSortEvidencePhoto ?? "",
         Drawn = drawn ?? "",
         Signature = signature ?? "José Example",
     };

@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="MailKit" Version="4.16.0" />
+    <EmbeddedResource Include="Data/scanner-lists.json" LogicalName="scanner-lists.json" />
   </ItemGroup>
 
   <ItemGroup>
