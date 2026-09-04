@@ -16,6 +16,10 @@
     "build": "bash scripts/build-verified.sh",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
     "test": "npm run build && node --test tests/*.test.mjs",
+    "test:e2e": "npm --prefix dotnet/e2e run test:e2e",
+    "test:e2e:headed": "npm --prefix dotnet/e2e run test:e2e:headed",
+    "test:e2e:ui": "npm --prefix dotnet/e2e run test:e2e:ui",
+    "test:e2e:report": "npm --prefix dotnet/e2e run test:e2e:report",
     "lint": "bash scripts/sites-env.sh -- eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "bash scripts/sites-env.sh -- drizzle-kit generate"
   },

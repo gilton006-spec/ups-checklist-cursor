@@ -118,6 +118,8 @@ Order in `Program.cs`:
 
 Anonymous paths when the gate is on: `/Login`, `/Logout`, `/Error`, `/health`. Unauthenticated `/api/*` returns 401. Other pages redirect to login. Login POSTs are rate-limited separately from report POSTs.
 
+`APP_MAINTENANCE_MODE=true` (or a live `APP_MAINTENANCE_FLAG_FILE`) short-circuits the pipeline before static files: HTTP 503 + `Cache-Control: no-store` everywhere except `/health`. On Fly.io, treat `APP_MAINTENANCE_MODE` as the durable switch — do not trust the ephemeral machine filesystem as the only shutdown state for a flag file.
+
 Antiforgery is **not** login. It only checks that a POST came from a page this app issued. The password cookie is the access boundary for this prototype. It does not identify a person and is not UPS SSO.
 
 ---

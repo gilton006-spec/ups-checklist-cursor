@@ -48,10 +48,11 @@ public class ChecklistMigrationTests : IClassFixture<ChecklistWebApplicationFact
     public void Monday_rules_warn_without_changing_position()
     {
         var positions = ChecklistPositions.All;
-        Assert.NotNull(ChecklistPositions.ScheduleWarning(positions[0], "2026-09-02"));
+        Assert.Contains("Monday only", ChecklistPositions.ScheduleWarning(positions[0], "2026-09-02")!);
         Assert.Null(ChecklistPositions.ScheduleWarning(positions[0], "2026-09-07"));
-        foreach (var id in new[] { "ps1", "ps2", "pd2" })
-            Assert.NotNull(ChecklistPositions.ScheduleWarning(positions.First(p => p.Id == id), "2026-09-07"));
+        foreach (var id in new[] { "ps1", "ps2" })
+            Assert.Contains("combined PS1 / PS2", ChecklistPositions.ScheduleWarning(positions.First(p => p.Id == id), "2026-09-07")!);
+        Assert.Contains("Not on Monday", ChecklistPositions.ScheduleWarning(positions.First(p => p.Id == "pd2"), "2026-09-07")!);
         Assert.Null(ChecklistPositions.ScheduleWarning(positions.First(p => p.Id == "pd1"), "2026-09-07"));
     }
 

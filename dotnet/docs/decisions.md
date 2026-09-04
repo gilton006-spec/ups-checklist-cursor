@@ -22,9 +22,15 @@ In-memory SHA-256 of the payload, ~10 minutes, single process. Reservation uses 
 
 `FLY_APP_NAME` enables trusting `X-Forwarded-*` because Fly is the TLS terminator. Local and test hosts do not trust arbitrary proxies.
 
-## ADR 6 — No Playwright in CI yet
+## ADR 6 — Playwright E2E in `dotnet/e2e`
 
-Critical journeys are covered by HTTP integration tests, Core validators, and Node helper tests. A browser suite would add a new runtime and CI image; it is not wired until that cost is accepted.
+Critical browser journeys run with Playwright (Chromium desktop + mobile viewport) against locally started Kestrel hosts. CI installs Chromium only. Tests refuse non-local `PLAYWRIGHT_BASE_URL` hosts and never use production SMTP or Fly.
+
+## ADR 10 — Emergency maintenance gate
+
+`APP_MAINTENANCE_MODE=true` is the durable production emergency switch (process environment / Fly secrets). It returns HTTP 503 with `Cache-Control: no-store` for every path except `/health`, including Razor pages, report APIs, and static assets. Existing browser tabs receive 503 on their next navigation or submit; nothing server-side is deleted.
+
+`APP_MAINTENANCE_FLAG_FILE` is an optional local/operator mechanism: maintenance is on only while that path exists. It is **not** exposed through any public HTTP endpoint. Do **not** rely on a flag file alone on Fly.io — the machine filesystem is ephemeral, so a redeploy or new volume state can clear the file. Prefer `APP_MAINTENANCE_MODE` (or a Fly secret / restart with the env set) for production shutdown.
 
 ## ADR 7 — SMTP behind an interface; recipient is server-configured
 

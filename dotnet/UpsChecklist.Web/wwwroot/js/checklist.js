@@ -327,7 +327,9 @@ import { antiforgeryHeaders } from "./report-request.mjs";
     els.emailOpen.title = handoverConfig.emailConfigured
       ? ""
       : "Email is not configured on this server yet.";
-    els.statusArea.innerHTML = state.reportSent ? `<p class="success">${escapeHtml(state.reportSent)}</p>` : "";
+    if (state.reportSent) {
+      els.statusArea.innerHTML = `<p class="success">${escapeHtml(state.reportSent)}</p>`;
+    }
   }
 
   function renderShell() {

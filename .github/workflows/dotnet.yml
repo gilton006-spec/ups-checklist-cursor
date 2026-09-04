@@ -14,23 +14,33 @@ concurrency:
   group: dotnet-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Build, test, coverage
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
     defaults:
       run:
         working-directory: dotnet
+    env:
+      E2E_SITE_PASSWORD: e2e-test-only
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4.3.1
         with:
           dotnet-version: "10.0.x"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4.4.0
         with:
           node-version: "22"
+          cache: npm
+          cache-dependency-path: dotnet/e2e/package-lock.json
 
       - name: Restore
         run: dotnet restore UpsChecklist.slnx
@@ -79,7 +89,7 @@ jobs:
 
       - name: Upload coverage artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: coverage-cobertura
           path: dotnet/TestResults/**/coverage.cobertura.xml
@@ -90,3 +100,23 @@ jobs:
 
       - name: Scanner PDF / CSRF regression
         run: dotnet run --project tools/ScannerRegressionTests --configuration Release -- /tmp/scanner-pdfs
+
+      - name: Install Playwright dependencies
+        working-directory: dotnet/e2e
+        run: |
+          npm ci
+          npx playwright install chromium --with-deps
+
+      - name: Playwright E2E
+        working-directory: dotnet/e2e
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: playwright-report
+          path: |
+            dotnet/e2e/playwright-report
+            dotnet/e2e/test-results
+          if-no-files-found: ignore

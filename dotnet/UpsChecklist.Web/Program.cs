@@ -153,6 +153,9 @@ var app = builder.Build();
 if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("FLY_APP_NAME")))
     app.UseForwardedHeaders();
 
+// Before static files so workbook images and JS also return 503 during an emergency stop.
+app.UseMiddleware<MaintenanceMiddleware>();
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
